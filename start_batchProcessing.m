@@ -5,26 +5,30 @@
 %
 %Author: MJ Siniscalchi, 171212
 %
+%SETUP:
+% (1) To determine the needed files/MATLAB packages, run these three lines in the console:
+%   [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing.m');
+%   {fList{:}}'
+%   {pList.Name}'
+% (2) In first section, 'Set Hyperparameters': 
+%       -Specify paths to toolboxes and data (look for <SETUP> tag).
+%       -Manually set values of hyperparameters, which are fields of the struct 'params'.
+%       -Set SEARCH FILTER for finding experiment directories.
 %
-%To determine the needed files/MATLAB packages, run these three lines in the console:
-%
-%[fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing.m');
-%{fList{:}}'
-%{pList.Name}'
-%
-%Edits:
+%EDITS:
 %   180709mjs Began rewrite for registration directly from raw TIF files
 %               (previous ver required pre-stitching)
-%   Future: option for co-registering two functional channels (current version 
-%       only outputs stacks as TIF for one channel)
+%
+%FUTURE: Create user interface for obtaining hyperparameter values.
 %
 %--------------------------------------------------------------------------
 clearvars;
 
-%Search filter for finding data directories
+%% Set Hyperparameters
+
+%SEARCH FILTER for finding data directories
 search_filter = '*M62*'; %wildcard syntax; if none, do not include stars
 
-%<<FUTURE: CREATE USER INTERFACE FOR OBTAINING THESE VALUES)>>
 %Set Parameters for iterative correction, if applicable 
 params.nIter = [0,0,0]; %Fixed n-iterations for each run; [seed,rigid,nonrigid] Set >0 only if not using auto iteration (some stacks failed with assorted errors)
 params.max_reps = [1,3,10]; %maximum number of repeats for auto iteration; set each to 1 or 0 for fixed # iterations (and set params.nIter>0).
@@ -39,13 +43,13 @@ params.bin_width = 1;   %For binned average; set to 1 to stitch a non-downsample
 
 params.delete_mat = true;  %Delete .MAT files after writing .TIFs (keep if desired for troubleshooting, alt. formats, etc.)
 
-%Specify corresponding directories:
+%<SETUP> Specify corresponding directories:
 root_dir =  'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
 %root_dir = 'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre R2G';
 %root_dir = 'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre G2G';
 
-%Paths to required toolboxes
-addpath(genpath('C:\Users\Michael\Documents\MATLAB\iCorre Registration')); %Location of iCorre Registration directory
+%<SETUP> Paths to required toolboxes
+addpath(genpath('C:\Users\Michael\Documents\MATLAB\GitHub\iCorre-Registration')); %Location of iCorre Registration directory
 
 %% Batch movement correction
 [status,msg] = iCorre_batch(root_dir,search_filter,params); %iCorre_batch(root_dir,search_filter,params)
