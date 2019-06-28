@@ -39,7 +39,7 @@ params.split_channels.ref_channel = 0; %1=red (tdTomato/structural or if 2-color
 params.split_channels.reg_channel = 0; %2=green (GCaMP/physiological), 0 if 1-color imaging
 
 params.do_stitch = true;   %Global binned average stack and max projection for quality control.
-params.bin_width = 1;   %For binned average; set to 1 to stitch a non-downsampled stack. 
+params.bin_width = 2;   %For binned average; set to 1 to stitch a non-downsampled stack. 
 
 params.delete_mat = true;  %Delete .MAT files after writing .TIFs (keep if desired for troubleshooting, alt. formats, etc.)
 
@@ -51,7 +51,7 @@ root_dir =  'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iN
 %<SETUP> Paths to required toolboxes
 addpath(genpath('C:\Users\Michael\Documents\MATLAB\GitHub\iCorre-Registration')); %Location of iCorre Registration directory
 
-%% Batch movement correction
+%% Batch Movement Correction
 [status,msg] = iCorre_batch(root_dir,search_filter,params); %iCorre_batch(root_dir,search_filter,params)
 
 %***FUTURE: generate stackInfo.mat
