@@ -27,7 +27,7 @@ clearvars;
 %% Set Hyperparameters
 
 %SEARCH FILTER for finding data directories
-search_filter = '*M62*'; %wildcard syntax; if none, do not include stars
+search_filter = '*M*'; %wildcard syntax; if none, do not include stars
 
 %Set Parameters for iterative correction, if applicable 
 params.nIter = [0,0,0]; %Fixed n-iterations for each run; [seed,rigid,nonrigid] Set >0 only if not using auto iteration (some stacks failed with assorted errors)
@@ -44,12 +44,12 @@ params.bin_width = 2;   %For binned average; set to 1 to stitch a non-downsample
 params.delete_mat = true;  %Delete .MAT files after writing .TIFs (keep if desired for troubleshooting, alt. formats, etc.)
 
 %<SETUP> Specify corresponding directories:
-root_dir =  'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
-%root_dir = 'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre R2G';
+root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
+%root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre R2G';
 %root_dir = 'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre G2G';
 
 %<SETUP> Paths to required toolboxes
-addpath(genpath('C:\Users\Michael\Documents\MATLAB\GitHub\iCorre-Registration')); %Location of iCorre Registration directory
+addpath(genpath('J:\Documents\MATLAB\GitHub\iCorre-Registration')); %Location of iCorre Registration directory
 
 %% Batch Movement Correction
 [status,msg] = iCorre_batch(root_dir,search_filter,params); %iCorre_batch(root_dir,search_filter,params)
