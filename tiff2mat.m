@@ -1,40 +1,50 @@
-function stackInfo = tiff2mat(raw_paths, mat_paths, chan_number)
+%% tiff2mat()
+%
+% PURPOSE: To convert movement-corrected TIFF files into 3D arrays stored in MAT format.
+%           Returns struct 'info' which contains selected info from ScanImage
+%           header as well as the extracted tag struct for writing to TIF.
+% AUTHOR: MJ Siniscalchi, 190826
+%
+%--------------------------------------------------------------------------
+
+function tags = tiff2mat(tif_paths, mat_paths, chan_number)
 
 if nargin<3
    chan_number=[]; %For interleaved 2-color imaging; channel to convert.
 end
 
 tic;
-w = warning; %get warning state
-warning('off','all'); %TROUBLESHOOT invalid ImageDescription tag from ScanImage
 
-img_info = imfinfo(raw_paths{1}); %Copy info from first raw TIF
+w = warning; %get warning state
+warning('off','all'); %TROUBLESHOOT: invalid ImageDescription tag from ScanImage
+
+img_info = imfinfo(tif_paths{1}); %Copy info from first raw TIF
 img_info = img_info(1);
 fields_info = {'Height',      'Width',     'BitsPerSample','SamplesPerPixel'};
 fields_tiff = {'ImageLength', 'ImageWidth','BitsPerSample','SamplesPerPixel'};
 for i=1:numel(fields_info)
-    stackInfo.(fields_tiff{i}) = img_info.(fields_info{i}); %Assign selected fields to stackInfo
+    tags.(fields_tiff{i}) = img_info.(fields_info{i}); %Assign selected fields to tag struct
 end
-stackInfo.Photometric = Tiff.Photometric.MinIsBlack;
-stackInfo.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-stackInfo.Software = 'MATLAB';
+tags.Photometric = Tiff.Photometric.MinIsBlack;
+tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+tags.Software = 'MATLAB';
 
-for i=1:numel(raw_paths)
+for i=1:numel(tif_paths)
     
-    [path,filename,ext] = fileparts(raw_paths{i});
-    disp(['Converting ' [filename,ext] '...']);
-
-    stack = loadtiffseq(path,[filename ext]); % load raw stack (.tif)
+    [pathname,filename,ext] = fileparts(tif_paths{i});
+    source = [filename ext]; %Store filename of source file
+    
+    disp(['Converting ' source '...']);
+    stack = loadtiffseq(pathname,source); % load raw stack (.tif)
     if chan_number %Check for correction based on structural channel
         stack = stack(:,:,chan_number:2:end); %Just convert reference channel
     end
-    stackInfo.nFrames(i) = size(stack,3);
-    save(mat_paths{i},'stack');
+    save(mat_paths{i},'stack','tags','source','-v7.3');
 end
 
 %Console display
-[path,~,~] = fileparts(mat_paths{1});
-disp(['Stacks saved as .MAT in ' path]);
+[pathname,~,~] = fileparts(mat_paths{1});
+disp(['Stacks saved as .MAT in ' pathname]);
 disp(['Time needed to convert files: ' num2str(toc) ' seconds.']);
 warning(w); %revert warning state
 
