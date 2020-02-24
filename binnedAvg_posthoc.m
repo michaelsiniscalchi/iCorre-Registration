@@ -3,11 +3,16 @@
 %
 clearvars;
 
-data_dir = uigetdir('C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline');
-bin_width = 2;
+root_dir = 'J:\Data & Analysis';
+bin_width = 1;
 
-cd(data_dir);
-stack_path = uigetfile(fullfile(data_dir,'*.tif'),'Select One or More Files','MultiSelect', 'on');
-load('regInfo.mat','stackInfo');
+[fname,fpath] = uigetfile(fullfile(root_dir),'Select One or More Files to Stitch and Downsample','MultiSelect', 'on');
+for i = 1:numel(fname)
+stack_path{i} = fullfile(fpath,fname{i});
+end
 
-binnedAvg_batch(stack_path,data_dir,stackInfo,bin_width);
+%Load stack_info.mat
+save_dir = fullfile(fpath,'..\.'); %Parent of fpath
+stackInfo = load(fullfile(save_dir,'stack_info.mat'));
+
+binnedAvg_batch(stack_path,save_dir,stackInfo,bin_width);

@@ -31,12 +31,12 @@ search_filter = '*M*'; %wildcard syntax; if none, do not include stars
 
 %Set Parameters for iterative correction, if applicable 
 params.nIter = [0,0,0]; %Fixed n-iterations for each run; [seed,rigid,nonrigid] Set >0 only if not using auto iteration (some stacks failed with assorted errors)
-params.max_reps = [1,3,10]; %maximum number of repeats for auto iteration; set each to 1 or 0 for fixed # iterations (and set params.nIter>0).
+params.max_reps = [1,1,1]; %maximum number of repeats for auto iteration; set each to 1 or 0 for fixed # iterations (and set params.nIter>0).
 params.max_err = 1; %threshold abs(dx)+abs(dy) per frame [TROUBLESHOOT - save max(err) for each iter]
 params.nFrames_seed = 1000; %nFrames to AVG for for initial ref image (must be < nFrames; 1000 works well of 256x256 galvo data)
 
-params.split_channels.ref_channel = 0; %1=red (tdTomato/structural or if 2-color functional), 2=green to ignore red channel, 0 if 1-color imaging
-params.split_channels.reg_channel = 0; %2=green (GCaMP/physiological), 0 if 1-color imaging
+params.split_channels.ref_channel = 1; %1=red (tdTomato/structural or if 2-color functional), 2=green to ignore red channel, 0 if 1-color imaging
+params.split_channels.reg_channel = 2; %2=green (GCaMP/physiological), 0 if 1-color imaging
 
 params.do_stitch = true;   %Global binned average stack and max projection for quality control.
 params.bin_width = 2;   %For binned average; set to 1 to stitch a non-downsampled stack. 
@@ -44,8 +44,8 @@ params.bin_width = 2;   %For binned average; set to 1 to stitch a non-downsample
 params.delete_mat = true;  %Delete .MAT files after writing .TIFs (keep if desired for troubleshooting, alt. formats, etc.)
 
 %<SETUP> Specify corresponding directories:
-root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
-%root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre R2G';
+%root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
+root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre R2G';
 %root_dir = 'C:\Users\Michael\Documents\Data & Analysis\Processing Pipeline\2 iNoRMCorre G2G';
 
 %<SETUP> Paths to required toolboxes

@@ -7,7 +7,8 @@ warning('off','all'); %TROUBLESHOOT invalid ImageDescription tag from ScanImage
 disp('Applying shifts to second channel...'); 
 S = load(path_names.mat{1},'options');
 field_names = fieldnames(S.options);
-disp(['NoRMCorre parameter sets: ' field_names{:} '...']);
+disp('Hyperparameter sets:');
+disp(field_names);
 
 %Progress bar
 h = waitbar(0,'Applying shifts...','Name','Progress'); 
@@ -34,7 +35,7 @@ for i = 1:numel(path_names.mat)
     end
   
     save_path{i} = fullfile(save_dir,strcat(field_names{end},'_',filename,'.tif'));
-    saveTiff(stack,stackInfo,fullfile(save_path{i})); %saveTiff(stack,img_info,save_path))
+    saveTiff(stack,stackInfo.tags,fullfile(save_path{i})); %saveTiff(stack,img_info,save_path))
     
 end
 

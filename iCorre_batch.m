@@ -51,8 +51,9 @@ end
 %% Get directories and filenames
 for i=1:numel(data_dirs)
     try
+        dirs.main = fullfile(root_dir,data_dirs{i});
         dirs.raw = fullfile(root_dir,data_dirs{i},'raw');
-        dirs.mat = fullfile(root_dir,data_dirs{i},'mat');
+        dirs.mat = fullfile(root_dir,data_dirs{i},'MAT');
         dirs.save = fullfile(root_dir,data_dirs{i},'registered'); %to save registered stacks as TIFF
         if params.split_channels.ref_channel~=params.split_channels.reg_channel && params.do_stitch %If two-color co-registration
             dirs.save_ref = fullfile(root_dir,data_dirs{i},'reg_master'); %Save dir for registered master channel
@@ -71,7 +72,8 @@ for i=1:numel(data_dirs)
             path.raw{j} = fullfile(dirs.raw,file_names{j});
             path.mat{j} = fullfile(dirs.mat,[file_names{j}(1:end-4) '.mat']); %for .mat file
         end
-        path.regData = fullfile(dirs.save,'regInfo.mat'); %for .mat file
+        path.regData = fullfile(root_dir,data_dirs{i},'reg_info.mat'); %Matfile containing registration data
+        path.stackInfo = fullfile(root_dir,data_dirs{i},'stack_info.mat'); %Matfile containing image header info and tag struct for writing to TIF
         
         disp(['Data directory: ' dirs.raw]);
         disp({['Path for stacks as *.mat files: ' dirs.mat];...
@@ -81,22 +83,23 @@ for i=1:numel(data_dirs)
         
         %% Load raw TIFs and convert to MAT for further processing
         disp('Converting *.TIF files to *.MAT for movement correction...');
-        stackInfo = tiff2mat(path.raw, path.mat, params.split_channels.ref_channel); %Batch convert all TIF stacks to MAT and get info.
-        save(path.regData,'stackInfo','-v7.3');
+        stackInfo = get_stackInfo(raw_paths); %Extract header info from image stack (written by ScanImage)
+        stackInfo.tags = tiff2mat(path.raw, path.mat, params.split_channels.ref_channel); %Batch convert all TIF stacks to MAT and get info.
+        save(path.stackInfo,'-STRUCT','stackInfo','-v7.3');
         
         %% Correct RIGID, then NON-RIGID movement artifacts iteratively
         % Set parameters
-        options.seed = NoRMCorreSetParms('d1',stackInfo.ImageLength,'d2',stackInfo.ImageWidth,'max_shift',[15,15],...
+        options.seed = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,'max_shift',[15,15],...
             'boundary','zero','upd_template',false,'use_parallel',true,'output_type','mat'); %Initial rigid correct for drift
-        options.RMC = NoRMCorreSetParms('d1',stackInfo.ImageLength,'d2',stackInfo.ImageWidth,'max_shift',[10,10],...
+        options.RMC = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,'max_shift',[10,10],...
             'boundary','zero','upd_template',false,'use_parallel',true,'output_type','mat'); %Rigid Correct; avg whole stack for template
-        options.NRMC = NoRMCorreSetParms('d1',stackInfo.ImageLength,'d2',stackInfo.ImageWidth,'boundary','zero',...
+        options.NRMC = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,'boundary','zero',...
             'grid_size',[64,64],'overlap_pre',[16,16],'overlap_post',[16,16],'us_fac',20,'mot_uf',4,...
             'max_shift',[10,10,0],'max_dev',[5,5,0],'upd_template',false,'use_parallel',true,...
             'output_type','mat','correct_bidir',false); %Non-rigid Correct; {'correct_bidir',true} threw error in iCorre.m on some data sets.
         
-        % Save options to initialize .mat file
-        save(path.regData,'params','-append'); %so that later saves in the loop can use -append
+        % Initialize .mat file
+        save(path.regData,'params','-v7.3'); %so that later saves in the loop can use -append
         
         % Iterative movement correction
         template = getRefImg(path.mat,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
@@ -133,12 +136,12 @@ for i=1:numel(data_dirs)
             path.save = applyShifts_batch(path,dirs.save,stackInfo,params.split_channels.reg_channel); %Apply shifts and save .TIF files
             if params.do_stitch
                 disp('Getting global downsampled stack (binned avg.) and max projection from reference channel...');
-                binnedAvg_batch(path.mat,dirs.save_ref,stackInfo,params.bin_width);
+                binnedAvg_batch(path.mat,dirs.save_ref,stackInfo,params.bin_width); %Save binned avg and projection to ref-channel dir
                 if params.delete_mat
                         rmdir(dirs.mat,'s'); %DELETE .MAT dir...
                 end
                 disp('Getting global downsampled stack (binned avg.) and max projection of co-registered frames...');
-                binnedAvg_batch(path.save,dirs.save,stackInfo,params.bin_width);
+                binnedAvg_batch(path.save,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
             end
             
         else
@@ -149,7 +152,7 @@ for i=1:numel(data_dirs)
             end
             if params.do_stitch %Generate global and summary stacks for quality control
                 disp('Getting global downsampled stack (binned avg.) and max projection of registered frames...');
-                binnedAvg_batch(path.mat,dirs.save,stackInfo,params.bin_width);
+                binnedAvg_batch(path.mat,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
             end
             if params.delete_mat
                 rmdir(dirs.mat,'s'); %DELETE .MAT dir...

@@ -19,7 +19,7 @@
 
 function saveTiff(img_stack,img_info,save_path)
 
-%Get tags from imfinfo() structure or from stackInfo
+%Get tags from imfinfo() structure or from get_stackInfo.m
 if ~isfield(img_info,'ImageLength') || ~isfield(img_info,'ImageWidth') 
     img_info.ImageLength = img_info.Height; %imfinfo returns 'Height' and 'Width' instead of valid Tiff tags
     img_info.ImageWidth  = img_info.Width;

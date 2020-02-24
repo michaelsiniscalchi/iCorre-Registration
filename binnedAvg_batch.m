@@ -9,7 +9,7 @@ stack_is_mat = strcmp(ext,'.mat');
 
 %Get indices for local averaging
 idx.DS_global = 1:bin_width:sum(stackInfo.nFrames); %Start frame for segment to average
-idx.firstFrameGlobal = [0 cumsum(stackInfo.nFrames(1:end-1))]+1; %Frame idx of first frame in stack relative to entire session
+idx.firstFrameGlobal = [0; cumsum(stackInfo.nFrames(1:end-1))]+1; %Frame idx of first frame in stack relative to entire session
 for i=1:numel(idx.firstFrameGlobal)
     firstFramelocal = idx.DS_global(find(idx.DS_global>=idx.firstFrameGlobal(i),1,'first'))...
         - idx.firstFrameGlobal(i) + 1;
@@ -20,7 +20,7 @@ idx.DS_local{end} = idx.DS_local{end}...
 idx.DS_global = idx.DS_global(1:numel([idx.DS_local{:}]));
 
 %% Generate downsampled stack and max projection and save as TIF
-stack_downsample = zeros(stackInfo.ImageLength,stackInfo.ImageWidth,numel(idx.DS_global),'uint16'); %Initialize downsample stack
+stack_downsample = zeros(stackInfo.imageHeight,stackInfo.imageWidth,numel(idx.DS_global),'uint16'); %Initialize downsample stack
 
 %Load first stack
 if stack_is_tif
@@ -37,8 +37,10 @@ end
 
 kk = 1; %Counter var for global idx 
 for j = 1:numel(stack_path)
+    disp(['Concatenating image frames and downsampling. Substack ' num2str(j) '/' num2str(numel(stack_path)) '...']);
     
-    stack_max(:,:,j) = max(curr.stack,[],3);   %Local max for quality control
+    %Get local max for global max projection
+    stack_max(:,:,j) = max(curr.stack,[],3);   
     
     if j<numel(stack_path) %Load next stack to pick up remainder of frames for averaging
         if stack_is_tif
@@ -58,11 +60,8 @@ for j = 1:numel(stack_path)
     curr = next;
 end
 
-saveTiff(stack_downsample,stackInfo,fullfile(...
-    save_dir,[filename(1:end-4) '_regDS' num2str(bin_width) '.tif'])); %Save max projection for entire session
-saveTiff(max(stack_max,[],3),stackInfo,fullfile(save_dir,'reg_stackMax.tif')); %Save max projection for entire session
-run_times.QC_summary = toc; %Get time to completion
+saveTiff(stack_downsample,stackInfo.tags,fullfile(...
+    save_dir,[filename(1:end-4) '_DS' num2str(bin_width) '.tif'])); %Save max projection for entire session
+saveTiff(max(stack_max,[],3),stackInfo.tags,fullfile(save_dir,'reg_stackMax.tif')); %Save max projection for entire session
 
-if exist(fullfile(save_dir,'regInfo.mat'),'file')
-    save(fullfile(save_dir,'regInfo.mat'),'run_times','-append'); %save parameters
-end
+toc
