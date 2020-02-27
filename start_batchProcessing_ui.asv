@@ -31,7 +31,7 @@ params = getUserParams();
 
 %SEARCH FILTER for finding data directories
 % search_filter = '*M*'; %wildcard syntax; specify [] to process all data directories in root_dir.
-% params.scim_ver = 3; %ScanImage version
+% params.scim_ver = 3;
 
 % search_filter = '*Test*';
 % params.scim_ver = 5;
@@ -50,11 +50,16 @@ params = getUserParams();
 % 
 % params.delete_mat = true;  %Delete .MAT files after writing .TIFs (keep if desired for troubleshooting, alt. formats, etc.)
 % 
-% params.root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
+% %<SETUP> Specify corresponding directories:
+% root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
+% % root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre R2G';
+% % root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre G2G';
 
 %<SETUP> Paths to required toolboxes
 addpath(genpath(pwd)); %Location of iCorre Registration directory
 
 %% Batch Movement Correction
-[status,msg] = iCorre_batch(params.root_dir, params.search_filter, params); %iCorre_batch(root_dir,search_filter,params)
+[status,msg] = iCorre_batch(params.root_dir,search_filter,params); %iCorre_batch(root_dir,search_filter,params)
 
+%***FUTURE: generate stackInfo.mat
+%Use code from StitchTiffs_greenChan.m

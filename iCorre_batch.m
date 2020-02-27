@@ -14,8 +14,6 @@
 %   logical status:     Logical mask for successfully processed data directories.
 %   cell msg:           Any associated error messages, indexed according to data directory.
 %
-%EDITS
-%181015mjs Fixed bug in getRefImg ln 24-25: ">" should have been ">="; 
 %-----------------------------------------------------------------------------------------------------------
 
 function [ status, err_msg ] = iCorre_batch(root_dir,search_filter,params)
@@ -27,8 +25,6 @@ if nargin<3
     if nargin<2
         search_filter = '';
     end
-elseif any(params.nIter>0)
-    params.max_reps(params.nIter>1)=1; %no automatic repeat if set to fixed number of iterations
 end
 
 %% Get list of data directories
