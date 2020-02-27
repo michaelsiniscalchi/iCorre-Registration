@@ -52,8 +52,7 @@ switch params.scim_ver
         stackInfo.imageHeight   = info(1).Height; %The corresponding tiff tag will be 'imageLength' (if 'tiff2mat.m' is used, proper tiff tags are stored in stackInfo.tags)
         stackInfo.frameRate     = []; %Header info needed from class ScanImageTiffReader() or opentif(); opentif() seems to depend on ScanImage Software package
         stackInfo.zoomFactor    = [];
-        stackInfo.nChans        = ...
-            any(find(cell2mat(struct2cell(params.split_channels)))) + 1; % == false+1 = 1 if 1-channel; == true+1 = 2 if 2-channel
+        stackInfo.nChans        = any(find([params.ref_channel,params.reg_channel])) + 1; % == false+1 = 1 if 1-channel; == true+1 = 2 if 2-channel
                     
         for i = 1:numel(raw_path)
             

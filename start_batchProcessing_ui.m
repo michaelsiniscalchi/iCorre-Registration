@@ -1,25 +1,28 @@
 %% start_batchProcessing
-%Purpose: Script to batch process 1- or 2-channel imaging stacks. Included
+%
+%Purpose: Script to process any number of 1- or 2-channel imaging stacks. Included
 %   functions correct rigid and non-rigid movement artifacts using a flexible
 %   recursive approach.
 %
 %Author: MJ Siniscalchi, 171212
 %
 %SETUP:
-% (1) To determine the needed files/MATLAB packages, run these three lines in the console:
-%   [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing.m');
-%   {fList{:}}'
-%   {pList.Name}'
-% (2) In first section, 'Set Hyperparameters': 
-%       -Specify paths to toolboxes and data (look for <SETUP> tag).
-%       -Manually set values of hyperparameters, which are fields of the struct 'params'.
-%       -Set SEARCH FILTER for finding experiment directories.
+%       (1) To determine the needed files/MATLAB packages, run these three lines in the console:
+%           [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing.m');
+%           {fList{:}}'
+%           {pList.Name}'
+%       (2) Download and install the necessary MATLAB components. Local toolboxes are included in 
+%               the repository found at https://github.com/michaelsiniscalchi/iCorre-Registration
+%       (3) Run this script to begin. Set hyperparameters using the dialog box.  
+%
+%   NOTES: 
+%       *BATCH PROCESSING: iCorre_batch can register image stacks from multiple data directories back-to-back.
+%       *Specify batch processing by entering full path to batch directory (parent dir. to data dirs.).
+%       *Set SEARCH FILTER to specify a subset of data directories within batch directory.
 %
 %EDITS:
-%   180709mjs Began rewrite for registration directly from raw TIF files
-%               (previous ver required pre-stitching)
-%
-%FUTURE: Create user interface for obtaining hyperparameter values.
+%   180709mjs Began rewrite for registration directly from raw TIF files 
+%           (previous version required concatenation prior to movement correction)
 %
 %--------------------------------------------------------------------------
 clearvars;
@@ -27,34 +30,20 @@ clearvars;
 %% Set Hyperparameters
 
 % Get User Input (See comments below for more explanation of parameter settings.)
-params = getUserParams();
+path_settings = fullfile(pwd,'user_settings.mat'); %Default user settings file; edit to specify eg a path within your data directory hierarchy
+[root_dir, search_filter, params] = getUserSettings(path_settings);
 
-%SEARCH FILTER for finding data directories
-% search_filter = '*M*'; %wildcard syntax; specify [] to process all data directories in root_dir.
-% params.scim_ver = 3; %ScanImage version
+% If Batch Processing not Specified
+if isempty(root_dir)
+    data_dir = uigetdir(path_settings,'Please Specify Data Directory');
+    [root_dir, data_dir, ~] = fileparts(data_dir); %Specify a "batch" of one data directory
+    search_filter = ['*' data_dir '*']; 
+end
 
-% search_filter = '*Test*';
-% params.scim_ver = 5;
-% 
-% %Set Parameters for iterative correction, if applicable 
-% params.nIter = [0,0,0]; %Fixed n-iterations for each run; [seed,rigid,nonrigid] Set >0 only if not using auto iteration (some stacks failed with assorted errors)
-% params.max_reps = [1,1,0]; %maximum number of repeats for auto iteration; set each to 1 or 0 for fixed # iterations (and set params.nIter>0).
-% params.max_err = 1; %threshold abs(dx)+abs(dy) per frame [TROUBLESHOOT - save max(err) for each iter]
-% params.nFrames_seed = 100; %nFrames to AVG for for initial ref image (must be < nFrames; 1000 works well of 256x256 galvo data)
-% 
-% params.split_channels.ref_channel = 0; %1=red (tdTomato/structural or if 2-color functional), 2=green to ignore red channel, 0 if 1-color imaging
-% params.split_channels.reg_channel = 0; %2=green (GCaMP/physiological), 0 if 1-color imaging
-% 
-% params.do_stitch = true;   %Global binned average stack and max projection for quality control.
-% params.bin_width = 2;   %For binned average; set to 1 to stitch a non-downsampled stack. 
-% 
-% params.delete_mat = true;  %Delete .MAT files after writing .TIFs (keep if desired for troubleshooting, alt. formats, etc.)
-% 
-% params.root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
+%% Recursive Movement Correction (optional batch processing)
 
-%<SETUP> Paths to required toolboxes
+% Add Paths to Local Toolboxes
 addpath(genpath(pwd)); %Location of iCorre Registration directory
 
-%% Batch Movement Correction
-[status,msg] = iCorre_batch(params.root_dir, params.search_filter, params); %iCorre_batch(root_dir,search_filter,params)
-
+% Main iCorre Wrapper
+[status,msg] = iCorre_batch(root_dir, search_filter, params); %iCorre_batch(root_dir,search_filter,params)
