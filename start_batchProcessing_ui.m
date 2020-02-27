@@ -27,6 +27,7 @@ clearvars;
 %% Set Hyperparameters
 
 %Try to set up user input for this...
+params = getUserParams();
 
 %SEARCH FILTER for finding data directories
 % search_filter = '*M*'; %wildcard syntax; specify [] to process all data directories in root_dir.
@@ -55,7 +56,7 @@ root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre 1Chan';
 % root_dir = 'J:\Data & Analysis\Processing Pipeline\2 iNoRMCorre G2G';
 
 %<SETUP> Paths to required toolboxes
-addpath(genpath('J:\Documents\MATLAB\GitHub\iCorre-Registration')); %Location of iCorre Registration directory
+addpath(genpath(pwd)); %Location of iCorre Registration directory
 
 %% Batch Movement Correction
 [status,msg] = iCorre_batch(root_dir,search_filter,params); %iCorre_batch(root_dir,search_filter,params)

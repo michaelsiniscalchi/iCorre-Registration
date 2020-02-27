@@ -83,7 +83,7 @@ for i=1:numel(data_dirs)
         
         %% Load raw TIFs and convert to MAT for further processing
         disp('Converting *.TIF files to *.MAT for movement correction...');
-        stackInfo = get_stackInfo(paths.raw); %Extract header info from image stack (written by ScanImage)
+        stackInfo = get_stackInfo_iCorre(paths.raw, params); %Extract header info from image stack (written by ScanImage)
         stackInfo.tags = tiff2mat(paths.raw, paths.mat, params.split_channels.ref_channel); %Batch convert all TIF stacks to MAT and get info.
         save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
         
@@ -94,7 +94,7 @@ for i=1:numel(data_dirs)
         options.RMC = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,'max_shift',[10,10],...
             'boundary','zero','upd_template',false,'use_parallel',true,'output_type','mat'); %Rigid Correct; avg whole stack for template
         options.NRMC = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,'boundary','zero',...
-            'grid_size',[64,64],'overlap_pre',[16,16],'overlap_post',[16,16],'us_fac',20,'mot_uf',4,...
+            'grid_size',[64,64],'overlap_pre',[16,16],'overlap_post',[16,16],...
             'max_shift',[10,10,0],'max_dev',[5,5,0],'upd_template',false,'use_parallel',true,...
             'output_type','mat','correct_bidir',false); %Non-rigid Correct; {'correct_bidir',true} threw error in iCorre.m on some data sets.
         
@@ -148,7 +148,7 @@ for i=1:numel(data_dirs)
             %Save registered stacks as .TIF
             for k = 1:numel(file_names)
                 S = load(paths.mat{k},'stack'); %load into struct to avoid eval(stack_names{k})
-                saveTiff(S.stack,stackInfo,fullfile(dirs.save,[options_label{m} '_' file_names{k}])); %saveTiff(stack,img_info,save_path))
+                saveTiff(S.stack,stackInfo.tags,fullfile(dirs.save,[options_label{m} '_' file_names{k}])); %saveTiff(stack,img_info,save_path))
             end
             if params.do_stitch %Generate global and summary stacks for quality control
                 disp('Getting global downsampled stack (binned avg.) and max projection of registered frames...');
