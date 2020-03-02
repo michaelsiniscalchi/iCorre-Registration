@@ -1,4 +1,4 @@
-% start_batchProcessing
+%% start_iCorre
 %
 %Purpose: Script to process any number of 1- or 2-channel imaging stacks. Included
 %   functions correct rigid and non-rigid movement artifacts using a flexible
@@ -8,9 +8,9 @@
 %
 %SETUP:
 %       (1) To determine the needed files/MATLAB packages, run these three lines in the console:
-          [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing_ui.m');
-          {fList{:}}'
-          {pList.Name}'
+%           [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing.m');
+%           {fList{:}}'
+%           {pList.Name}'
 %       (2) Download and install the necessary MATLAB components. Local toolboxes are included in 
 %               the repository found at https://github.com/michaelsiniscalchi/iCorre-Registration
 %       (3) Run this script to begin. Set hyperparameters using the dialog box.  
@@ -29,6 +29,9 @@ clearvars;
 
 %% Set Hyperparameters
 
+% Add Paths to Local Toolboxes
+addpath(genpath(pwd)); %Location of iCorre Registration directory
+
 % Get User Input (See comments below for more explanation of parameter settings.)
 path_settings = fullfile(pwd,'user_settings.mat'); %Default user settings file; edit to specify eg a path within your data directory hierarchy
 [root_dir, search_filter, params] = getUserSettings(path_settings);
@@ -41,9 +44,6 @@ if isempty(root_dir)
 end
 
 %% Recursive Movement Correction (optional batch processing)
-
-% Add Paths to Local Toolboxes
-addpath(genpath(pwd)); %Location of iCorre Registration directory
 
 % Main iCorre Wrapper
 [status,msg] = iCorre_batch(root_dir, search_filter, params); %iCorre_batch(root_dir,search_filter,params)
