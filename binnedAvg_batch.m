@@ -2,17 +2,25 @@ function binnedAvg_batch(stack_path,save_dir,stackInfo,bin_width)
 
 tic; %Start timer
 
-%Check data type
+% Check data type
 [pathname,filename,ext] = fileparts(stack_path{1});
 stack_is_tif = strcmp(ext,'.tif');
 stack_is_mat = strcmp(ext,'.mat');
 
-%Get indices for local averaging
-idx.DS_global = 1:bin_width:sum(stackInfo.nFrames); %Start frame for segment to average
-idx.firstFrameGlobal = [0; cumsum(stackInfo.nFrames(1:end-1))]+1; %Frame idx of first frame in stack relative to entire session
-for i=1:numel(idx.firstFrameGlobal)
+% Initialize variables
+curr = struct('stack',[]); %The current stack within 'stack_path'
+next = struct('stack',[]); %The next stack within 'stack_path'
+
+% Get indices for binned averaging
+%Start frame for each segment to average
+idx.DS_global = 1:bin_width:sum(stackInfo.nFrames); 
+%Idx of first frame in each stack relative to first frame in session
+idx.firstFrameGlobal = [0; cumsum(stackInfo.nFrames(1:end-1))]+1; 
+%Get local bin indices for each stack
+for i = 1:numel(idx.firstFrameGlobal)
+    %Get idx of first frame in each averaging bin for the current stack
     firstFramelocal = idx.DS_global(find(idx.DS_global>=idx.firstFrameGlobal(i),1,'first'))...
-        - idx.firstFrameGlobal(i) + 1;
+        - idx.firstFrameGlobal(i) + 1; 
     idx.DS_local{i} = firstFramelocal:bin_width:stackInfo.nFrames(i); %Idx of each start frame relative to first frame in stack
 end
 idx.DS_local{end} = idx.DS_local{end}...

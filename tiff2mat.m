@@ -5,6 +5,12 @@
 %           header as well as the extracted tag struct for writing to TIF.
 % AUTHOR: MJ Siniscalchi, 190826
 %
+% NOTES:
+%       *Could try this Vidrio class for loading TIFs (might speed the process) 
+%               % ScanImage Tiff reader
+%               import ScanImageTiffReader.ScanImageTiffReader; %Requires download!
+%               reader = ScanImageTiffReader(raw_path{1});
+%               data = reader.data; %This is the image stack.
 %--------------------------------------------------------------------------
 
 function tags = tiff2mat(tif_paths, mat_paths, chan_number)
