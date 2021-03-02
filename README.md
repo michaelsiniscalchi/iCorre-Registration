@@ -1,6 +1,6 @@
 # iCorre-Registration
 Recursive motion correction for 2-photon imaging data, using one or two color channels. 
-Based on NoRMCorre by flatironinstitute (https://github.com/flatironinstitute/NoRMCorre).
+Designed as an extension of NoRMCorre by flatironinstitute (https://github.com/flatironinstitute/NoRMCorre).
 
 User settings can be set and saved using the GUI, 'start_iCorre.m' in the main code directory.
 
