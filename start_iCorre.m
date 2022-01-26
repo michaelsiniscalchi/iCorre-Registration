@@ -7,8 +7,9 @@
 %Author: MJ Siniscalchi, 171212
 %
 %SETUP:
-%       (1) To determine the needed files/MATLAB packages, run these three lines in the console:
-%           [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_batchProcessing.m');
+%       (1) To determine the needed files/MATLAB packages, add the main directorie and all 
+%           subdirectories to the path. Then run these three lines in the console:
+%           [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_iCorre.m');
 %           {fList{:}}'
 %           {pList.Name}'
 %       (2) Download and install the necessary MATLAB components. Local toolboxes are included in 

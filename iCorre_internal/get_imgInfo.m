@@ -65,7 +65,7 @@ switch params.scim_ver
             [stackInfo.scim_header(i),~,imgInfo] = scanimage.util.opentif(raw_path{i}); 
                     
             %Number of frames per substack
-            stackInfo.nFrames(i)    = imgInfo.numImages; %***Might need imgInfo.numImages/stackInfo.nChans for 2-channel, depending on meaning of 'numImages'
+            stackInfo.nFrames(i)    = imgInfo.numFrames; % 220126mjs changed from stackInfo.nFrames(i) = imgInfo.numFrames;
             
             %Filename from raw substacks
             [~,fname,ext] = fileparts(raw_path{i});
