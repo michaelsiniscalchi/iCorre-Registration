@@ -1,6 +1,6 @@
 %% tiff2mat()
 %
-% PURPOSE: To convert movement-corrected TIFF files into 3D arrays stored in MAT format.
+% PURPOSE: To convert TIFF files into 3D arrays stored in MAT format.
 %           Returns struct 'info' which contains selected info from ScanImage
 %           header as well as the extracted tag struct for writing to TIF.
 % AUTHOR: MJ Siniscalchi, 190826
@@ -43,7 +43,7 @@ for i=1:numel(tif_paths)
     disp(['Converting ' source '...']);
     stack = loadtiffseq(pathname,source); % load raw stack (.tif)
     if chan_number %Check for correction based on structural channel
-        stack = stack(:,:,chan_number:2:end); %Just convert reference channel
+        stack = stack(:,:,chan_number:2:end); %Convert specified (eg reference) channel
     end
     save(mat_paths{i},'stack','tags','source','-v7.3');
 end
