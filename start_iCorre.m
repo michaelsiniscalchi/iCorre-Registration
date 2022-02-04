@@ -24,6 +24,8 @@
 %EDITS:
 %   180709mjs Began rewrite for registration directly from raw TIF files 
 %           (previous version required concatenation prior to movement correction)
+%   220203mjs Implemented reference image based on frames with top 10%
+%           pixel correlation. (Carson Stringer's suggestion).
 %
 %--------------------------------------------------------------------------
 clearvars;
@@ -41,7 +43,7 @@ path_settings = fullfile(pwd,'user_settings.mat'); %Default user settings file; 
 if isempty(root_dir)
     data_dir = uigetdir(path_settings,'Please Specify Data Directory');
     [root_dir, data_dir, ~] = fileparts(data_dir); %Specify a "batch" of one data directory
-    search_filter = ['*' data_dir '*']; 
+    search_filter = ['*' data_dir]; 
 end
 
 %% Recursive Movement Correction (optional batch processing)
