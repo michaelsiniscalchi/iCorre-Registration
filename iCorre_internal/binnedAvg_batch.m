@@ -1,4 +1,4 @@
-function binnedAvg_batch(stack_path,save_dir,stackInfo,bin_width)
+function binnedAvg_batch( stack_path, save_dir, stackInfo, bin_width )
 
 tic; %Start timer
 
@@ -40,7 +40,7 @@ if stack_is_tif
 elseif stack_is_mat
     curr = load(stack_path{1},'stack'); %Load first stack from *.MAT
 else
-    disp('Stack must be *.tif or saved as ''stack'' in a *.mat file.');
+    disp('Stack must be a single-channel *.tif or saved as ''stack'' in a *.mat file.');
 end
 
 kk = 1; %Counter var for global idx 
@@ -70,6 +70,6 @@ end
 
 saveTiff(stack_downsample,stackInfo.tags,fullfile(...
     save_dir,[filename(1:end-4) '_DS' num2str(bin_width) '.tif'])); %Save max projection for entire session
-saveTiff(max(stack_max,[],3),stackInfo.tags,fullfile(save_dir,'reg_stackMax.tif')); %Save max projection for entire session
+saveTiff(max(stack_max,[],3),stackInfo.tags,fullfile(save_dir,'stackMax.tif')); %Save max projection for entire session
 
 toc
