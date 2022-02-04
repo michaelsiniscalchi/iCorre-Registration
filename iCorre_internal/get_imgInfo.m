@@ -1,4 +1,4 @@
-function stackInfo = get_stackInfo_iCorre( raw_path, params)
+function stackInfo = get_imgInfo( raw_path, params)
 
 disp('Fetching stackInfo: metadata from image files...');
 

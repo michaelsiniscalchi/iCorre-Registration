@@ -16,14 +16,16 @@
 %OUTPUTS
 %   ref_img: Mean projection from N (=nFrames) frames.
 %
+%NOTES
+%   Future edit: implement Carsen Stringer's suggestion of averaging only subset of most correlated  frames.
 %--------------------------------------------------------------------------
 
 function ref_img = getRefImg(mat_path,stackInfo,nFrames)
 
-start_frame = round(0.5*sum(stackInfo.nFrames)-0.5*nFrames); %Get frames from ~halfway through session.
+start_frame = max([1, round(0.5*sum(stackInfo.nFrames)-0.5*nFrames)]); %Get frames from ~halfway through session.
 stackIdx(1) = find(cumsum(stackInfo.nFrames)>=start_frame,1,'first'); %idx of stack that contains first frame in segment for initial averaging
 stackIdx(2) = find(cumsum(stackInfo.nFrames)>=start_frame+nFrames-1,1,'first'); %idx of stack that contains last frame
-tempStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames); %to store all frames for averaging
+refStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames); %to store all frames for averaging
 
 f1_global = 1 + [0; cumsum(stackInfo.nFrames(1:end-1))]; %Global idx for first frame of each stack
 jj = 1; %Frame counter for full stack used for averaging (var tempStack). 
@@ -33,12 +35,19 @@ for j = stackIdx(1):stackIdx(2)
     if j == stackIdx(1)
         frameIdx(1) = start_frame - f1_global(j) + 1;
     elseif j == stackIdx(2)
-        frameIdx(2) = start_frame - f1_global(j) + nFrames;
+            frameIdx(2) = start_frame - f1_global(j) + nFrames;
     end
-    tempStack(:,:,jj:jj+(frameIdx(2)-frameIdx(1))) = S.stack(:,:,frameIdx(1):frameIdx(2));
+    refStack(:,:,jj:jj+(frameIdx(2)-frameIdx(1))) = S.stack(:,:,frameIdx(1):frameIdx(2));
     jj = jj+(frameIdx(2)-frameIdx(1))+1;
 end
 
-ref_img = mean(tempStack,3); % initial template image
+%Obtain initial reference using frames with greatest pixel correlation
+[sz1,sz2,sz3] = size(refStack);
+framesAsColumns = reshape(refStack,[sz1*sz2, sz3]); %Reshape to calculate pairwise correlations
+sum_R = sum(corrcoef(framesAsColumns)); %Sum of pairwise correlations
+idx = sum_R>prctile(sum_R,90); %Take top 10% most correlated frames 
+ref_img = mean(refStack(:,:,idx),3); % initial template image
+
+% ref_img = mean(tempStack,3); % initial template image
 
 
