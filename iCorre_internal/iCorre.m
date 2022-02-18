@@ -36,36 +36,40 @@ w = warning; %get warning state
 warning('off','MATLAB:mir_warning_maybe_uninitialized_temporary');
 
 while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
-    
+
     nReps = nReps+1; %Increment # Repeats
-    
+
     if exist('h','var')
         close(h);
     end
     h = waitbar(0,[upper(options_label) ' registration, iteration #' num2str(nReps) ' (0%)'],'Name','Progress');
-    
+
     err = []; %reset value before each iteration
     k = 0; %counter var for indexing global err values.
     for i=1:numel(path_names)
-        
+
         %Display within iteration as percent
         temp = (i-1)/numel(path_names);
         msg = [upper(options_label) ' registration, iteration #' num2str(nReps) '  (' num2str(temp*100,2) '%)'];
         waitbar(temp,h,msg);
-        
+
         %Movement correction
         S = load(path_names{i}); % contains variables: 'options','stack','sum_shifts'
         if isfield(S,'options')
             options = S.options; %Load struct so field can be appended for new registration type
         end
+        %         [stack,shifts,~,options.(options_label),~] = ...
+        %             normcorre_batch_even(S.stack,options_in,template_in); %normcorre_batch_even uses grid squares of equal size
         [stack,shifts,~,options.(options_label),~] = ...
             normcorre_batch(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
-        local_avg(:,:,i) = mean(stack,3); %take mean of each stack for later grand avg frame to be used as new template.
-        
+
+        %Obtain local reference for later grand avg frame to be used as new template
+        local_avg(:,:,i) = getCorrFrames(stack, 80); %Use top 20% most correlated frames
+
         if nReps==1 %Save col_shift for correction of a second chan using apply_shifts
             save(path_names{i},'options','-append'); %***Note: may need to sum col_shift from each iteration for apply_shifts()
         end
-                
+
         %Calculate values for iteration criteria
         field_names = fieldnames(shifts);
         for j=1:numel(shifts)
@@ -73,7 +77,7 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
             dy = shifts(j).shifts(:,:,:,2); %translations by frame, dim-2
             err(j+k) = max(sqrt(dx(:).^2 + dy(:).^2)); %translation distance; if NRMC, use MAX of grid
             if ~isfield(S,'sum_shifts')
-                sum_shifts.(options_label) = shifts; %initialize 
+                sum_shifts.(options_label) = shifts; %initialize
             elseif ~isfield(S.sum_shifts,options_label)
                 sum_shifts = S.sum_shifts;
                 sum_shifts.(options_label) = shifts; %initialize for new registration type
@@ -85,22 +89,26 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
                         sum_shifts.(options_label)(j).(field_names{n}) + shifts(j).(field_names{n});
                 end
             end
-            
+
         end
         k = j+k; % increment by nFrames
-        
+
         save(path_names{i},'stack','sum_shifts','options','-append'); %save running sum of local shifts in MAT file.
         clearvars S stack shifts sum_shifts
     end
-    
+
+    %Record translation distance for each iteration as metric for error from previous iteration
+    %***Future: could take framewise correlation with reference as metric
     if nReps==1
         err_mat = NaN(numel(err),max_reps); %initialize output var (size depends on cumulative length of all stacks)
     end
-    
     err_mat(:,nReps) = err; %matrix of translation errors (nGrids x nReps)
-    template_in = mean(local_avg,3); %take grand avg as template for next iteration
+
+    %Construct new template from local references
+    %     template_in = mean(local_avg,3); %take grand avg as template for next iteration
+    template_in = getCorrFrames(local_avg, 80); %Use top 20% most correlated local reference frames
     clearvars local_templates
-    
+
 end %end While loop
 
 if exist('err_mat','var')

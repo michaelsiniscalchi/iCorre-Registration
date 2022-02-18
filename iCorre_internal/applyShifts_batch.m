@@ -30,7 +30,7 @@ for i = 1:numel(path_names.mat)
     
     %Load .MAT file and apply shifts from master registration
     S = load(path_names.mat{i},'options','sum_shifts');
-    for j=1:numel(field_names)
+    for j = 1:numel(field_names)
         stack = apply_shifts(stack,S.sum_shifts.(field_names{j}),S.options.(field_names{j})); %apply shifts: apply_shifts(stack,shifts,options)
     end
   

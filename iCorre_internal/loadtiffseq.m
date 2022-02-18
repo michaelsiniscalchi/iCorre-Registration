@@ -1,20 +1,33 @@
 
-function D = loadtiffseq(path,filename)
+function stack = loadtiffseq(path,filename)
 
 pathname = fullfile(path,filename);
 
-info = imfinfo(pathname);
+%Import TiffReader
+import ScanImageTiffReader.ScanImageTiffReader;
 
-nX = info(1).Width;
-nY = info(1).Height;
-nZ = numel(info);
-D=zeros(nX,nY,nZ,'uint16');  %Initialize
+%Extract Data
+reader = ScanImageTiffReader(pathname);
+stack = reader.data;
 
-% Populate 3D array with imaging data from TIF file
-for i=1:nZ
-    D(:,:,i)=imread(pathname,i,'Info',info);
-end
+% --- Previous Version ----------
+% info = imfinfo(pathname);
+% 
+% nX = info(1).Width;
+% nY = info(1).Height;
+% nZ = numel(info);
+% D=zeros(nX,nY,nZ,'uint16');  %Initialize
+% 
+% % Populate 3D array with imaging data from TIF file
+% for i=1:nZ
+%     D(:,:,i)=imread(pathname,i,'Info',info);
+% end
 
+%---------------------------------------------------------------------------------------------------
+% Comment 2202118 MJ Siniscalchi:
+%
+% ScanImage TiffReader Class!
+%
 %---------------------------------------------------------------------------------------------------
 % Comment 191212 MJ Siniscalchi:
 %

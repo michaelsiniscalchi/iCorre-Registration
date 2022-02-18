@@ -42,12 +42,7 @@ for j = stackIdx(1):stackIdx(2)
 end
 
 %Obtain initial reference using frames with greatest pixel correlation
-[sz1,sz2,sz3] = size(refStack);
-framesAsColumns = reshape(refStack,[sz1*sz2, sz3]); %Reshape to calculate pairwise correlations
-sum_R = sum(corrcoef(framesAsColumns)); %Sum of pairwise correlations
-idx = sum_R>prctile(sum_R,90); %Take top 10% most correlated frames 
-ref_img = mean(refStack(:,:,idx),3); % initial template image
-
+ref_img = getCorrFrames(refStack, 90); %Use top 10% most correlated frames 
 % ref_img = mean(tempStack,3); % initial template image
 
 

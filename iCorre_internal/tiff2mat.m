@@ -35,7 +35,7 @@ tags.Photometric = Tiff.Photometric.MinIsBlack;
 tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
 tags.Software = 'MATLAB';
 
-for i=1:numel(tif_paths)
+for i = 1:numel(tif_paths)
     
     [pathname,filename,ext] = fileparts(tif_paths{i});
     source = [filename ext]; %Store filename of source file

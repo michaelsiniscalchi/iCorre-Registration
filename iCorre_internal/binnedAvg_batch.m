@@ -47,8 +47,8 @@ kk = 1; %Counter var for global idx
 for j = 1:numel(stack_path)
     disp(['Concatenating image frames and downsampling. Substack ' num2str(j) '/' num2str(numel(stack_path)) '...']);
     
-    %Get local max for global max projection
-    stack_max(:,:,j) = max(curr.stack,[],3);   
+    %Get local mean for global mean projection
+    stack_mean(:,:,j) = mean(curr.stack,3);   
     
     if j<numel(stack_path) %Load next stack to pick up remainder of frames for averaging
         if stack_is_tif
@@ -69,7 +69,7 @@ for j = 1:numel(stack_path)
 end
 
 saveTiff(stack_downsample,stackInfo.tags,fullfile(...
-    save_dir,[filename(1:end-4) '_DS' num2str(bin_width) '.tif'])); %Save max projection for entire session
-saveTiff(max(stack_max,[],3),stackInfo.tags,fullfile(save_dir,'stackMax.tif')); %Save max projection for entire session
+    save_dir,[filename(1:end-4) '_DS' num2str(bin_width) '.tif'])); %Save downsampled stack
+saveTiff(uint16(mean(stack_mean,3)),stackInfo.tags,fullfile(save_dir,'stackMean.tif')); %Save max projection for entire session
 
 toc

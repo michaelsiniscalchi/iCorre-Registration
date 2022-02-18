@@ -11,7 +11,7 @@ clearvars;
 root_dir = 'C:\Data\2-Photon Imaging';
 save_dir = 'stitched'; %Blank for parent dir
 params.scim_ver = 5;
-stitch_chan = 2; %Set to 0 for registered (1-channel) tiffs
+stitch_chan = 1; %Set to 0 for registered (1-channel) tiffs
 bin_width = 30;
 
 %---------------------------------------------------------------------------------------------------
@@ -21,9 +21,21 @@ for i = 1:numel(fname)
     stack_path{i} = fullfile(fpath,fname{i});
 end
 
-%Load stack_info.mat
+%Setup save directory and get filetype
 data_dir = fullfile(fpath,'..\.'); %Parent of fpath
-if isfile(fullfile(data_dir,'stack_info.mat')) %If file exists
+create_dirs(fullfile(data_dir,save_dir)); %Create dirs if non-existent
+save_dir = fullfile(data_dir,save_dir);
+[~,~,ext] = fileparts(fname{1});
+
+if strcmp(ext,'.mat')
+    stackInfo = load(stack_path{i},'tags');
+    for i=1:numel(stack_path)
+        matObj = matfile(stack_path{i});
+        stackInfo.nFrames(i) = size(matObj.stack,3);
+    end
+    stackInfo.imageHeight = stackInfo.tags.ImageLength;
+    stackInfo.imageWidth = stackInfo.tags.ImageWidth;
+elseif isfile(fullfile(data_dir,'stack_info.mat')) %If file exists
     stackInfo = load(fullfile(data_dir,'stack_info.mat'));
 else %Extract stack info and convert
     %Setup directory structure
@@ -47,5 +59,4 @@ if stitch_chan && strcmp(ext,'.tif')
 end
 
 %Save downsampled TIF in 'stitched' folder
-save_dir = fullfile(data_dir,save_dir);
 binnedAvg_batch(stack_path,save_dir,stackInfo,bin_width);

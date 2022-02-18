@@ -24,7 +24,7 @@ maxRepSeed = 1; %Number of repetitions for ref. image (seed) fixed at 1
 settings = [...
     
     "Batch Directory (optional)",                                       "root_dir",         "";...
-    "Search Filter (optional)",                                         "search_filter",    "*";...
+    "Search Filter (optional)",                                         "search_filter",    "";...
     "Save Settings As...",                                              "path_settings",    path_settings;...
     
     "ScanImage Version",                                                "scim_ver",         "5";...
@@ -67,7 +67,10 @@ for i = 1:size(settings,1)
         case "root_dir" %Strings
             params.(settings{i,2}) = settings{i,3};
         case "search_filter" 
-            params.(settings{i,2}) = strjoin(["*",settings{i,3},"*"],'');
+            params.(settings{i,2}) = settings{i,3};
+            if ~isempty(settings{i,3}) %Default is all directories
+                params.(settings{i,2}) = strjoin(["*",settings{i,3},"*"],'');
+            end
         case {"scim_ver","nFrames_seed","max_err","ref_channel","reg_channel","bin_width"} %Numeric
             params.(settings{i,2}) = str2double(settings{i,3});
         case {"grid_size","max_shift","max_dev"} %Numeric
