@@ -42,3 +42,20 @@ end
 tic;
 [header,~,imgInfo] = scanimage.util.opentif(fullfile(fpath,fname));
 toc
+
+params.scim_ver=5;
+stackInfo = get_imgInfo({fullfile(fpath,fname)}, params);
+
+%%
+tif_paths = {...
+    'C:\Data\2-Photon Imaging\Registered\220210 M413 T6\raw\220210 M413 T6_00002_00009.tif',...
+    'C:\Data\2-Photon Imaging\Registered\220210 M413 T6\raw\220210 M413 T6_00002_00010.tif',...
+    };
+mat_paths = {...
+    'C:\Data\2-Photon Imaging\Registered\220210 M413 T6\mat\220210 M413 T6_00002_00009.mat',...
+    'C:\Data\2-Photon Imaging\Registered\220210 M413 T6\mat\220210 M413 T6_00002_00010.mat',...
+    };
+
+tic;
+stackInfo = tiff2mat(tif_paths, mat_paths, 2, true);
+toc

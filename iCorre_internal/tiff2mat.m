@@ -1,56 +1,94 @@
 %% tiff2mat()
 %
 % PURPOSE: To convert TIFF files into 3D arrays stored in MAT format.
-%           Returns struct 'info' which contains selected info from ScanImage
+%           Returns struct 'stackInfo' which contains selected info from ScanImage
 %           header as well as the extracted tag struct for writing to TIF.
-% AUTHOR: MJ Siniscalchi, 190826
 %
-% NOTES:
-%       *Could try this Vidrio class for loading TIFs (might speed the process) 
-%               % ScanImage Tiff reader
-%               import ScanImageTiffReader.ScanImageTiffReader; %Requires download!
-%               reader = ScanImageTiffReader(raw_path{1});
-%               data = reader.data; %This is the image stack.
+% AUTHOR: MJ Siniscalchi, 190826
+%           -220310mjs Updated using TIFF library and ScanImageTiffReader
 %--------------------------------------------------------------------------
 
-function tags = tiff2mat(tif_paths, mat_paths, chan_number)
+function stackInfo = tiff2mat(tif_paths, mat_paths, options)
 
+tic; %For command window output
+
+%Handle options
 if nargin<3
-   chan_number=[]; %For interleaved 2-color imaging; channel to convert.
+    options.chan_number     = []; %For interleaved 2-color imaging; channel to convert.
+    options.crop_margins    = []; %Width of margins on each side of image; scalar or [top,bottom,left,right]
+    options.extract_I2C     = false; %Flag to extract I2C data from TIFF header
+end
+ 
+for optFields = ["chan_number","crop_margins","extract_I2C"]
+    if ~isfield(options,optFields)
+        options.(optFields) = [];
+    end
 end
 
-tic;
+% Convert each TIF File and Extract Specified Header Info
 
-w = warning; %get warning state
-warning('off','all'); %TROUBLESHOOT: invalid ImageDescription tag from ScanImage
-
-img_info = imfinfo(tif_paths{1}); %Copy info from first raw TIF
-img_info = img_info(1);
-fields_info = {'Height',      'Width',     'BitsPerSample','SamplesPerPixel'};
-fields_tiff = {'ImageLength', 'ImageWidth','BitsPerSample','SamplesPerPixel'};
-for i=1:numel(fields_info)
-    tags.(fields_tiff{i}) = img_info.(fields_info{i}); %Assign selected fields to tag struct
-end
-tags.Photometric = Tiff.Photometric.MinIsBlack;
-tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-tags.Software = 'MATLAB';
-
+descArray = cell(numel(tif_paths),1); %Initialize cell array of image descriptions
 for i = 1:numel(tif_paths)
     
-    [pathname,filename,ext] = fileparts(tif_paths{i});
-    source = [filename ext]; %Store filename of source file
-    
+    %Store name of source file
+    [~,filename,ext] = fileparts(tif_paths{i});
+    source = [filename ext]; 
+
     disp(['Converting ' source '...']);
-    stack = loadtiffseq(pathname,source); % load raw stack (.tif)
-    if chan_number %Check for correction based on structural channel
-        stack = stack(:,:,chan_number:2:end); %Convert specified (eg reference) channel
+    if i==1 % Extract general parameters for whole session from first stack
+        %Metadata from ScanImage Header
+        [stack, description, metadata] =  loadtiffseq(tif_paths{i}); % load raw stack (.tif)
+        stackInfo = getStackInfo(stack, description{1}, metadata); %Initialize struct 'stackInfo'
+        %TIFF Tags
+        tags = getTiffTags(tif_paths{i});
+    else % Load Remaining Stacks and Extract Image Descriptions         
+        [stack, description] =  loadtiffseq(tif_paths{i}); % load raw stack (.tif)
     end
+
+    %Check for correction based on structural channel
+    if options.chan_number 
+        if ~ismember(stackInfo.chans, options.chan_number)
+            error(['Error: Specified channel number (', num2str(options.chan_number), ') not found.']);
+        else
+            stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
+            description = description(1:2:end); %Remove superfluous image descriptions
+        end
+    end
+
+    %Crop images if specified
+    if options.crop_margins
+        stack = cropStack(stack, options.crop_margins);
+        if i==1 %Overwrite tags
+            [tags.ImageLength, stackInfo.imageHeight]   = deal(size(stack,1));
+            [tags.ImageWidth, stackInfo.imageWidth]     = deal(size(stack,2));
+            stackInfo.margins = options.crop_margins; %[top, bottom, left, right]
+        end
+    end
+
+    %Populate array of image descriptions
+    if options.extract_I2C
+        descArray{i} = description;
+    end
+
+    %Store additional info
+    stackInfo.nFrames(i,1) = size(stack,3); %Store number of frames
+    stackInfo.rawFileName{i,1} = source; %Save original filename
+    
+    %Save
     save(mat_paths{i},'stack','tags','source','-v7.3');
+end
+
+%Copy tags to stackInfo structure
+stackInfo.tags = tags;
+
+%Extract I2C Data if specified
+if options.extract_I2C
+    %Concatenate cell arrays for each TIFF stack
+    descArray = vertcat(descArray{:});
+    stackInfo.I2C = getI2CData(descArray);
 end
 
 %Console display
 [pathname,~,~] = fileparts(mat_paths{1});
 disp(['Stacks saved as .MAT in ' pathname]);
 disp(['Time needed to convert files: ' num2str(toc) ' seconds.']);
-warning(w); %revert warning state
-

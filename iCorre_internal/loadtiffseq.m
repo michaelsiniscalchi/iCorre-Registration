@@ -1,32 +1,21 @@
 
-function stack = loadtiffseq(path,filename)
-
-pathname = fullfile(path,filename);
+function [ stack, descriptions, metadata ] = loadtiffseq(full_path)
 
 %Import TiffReader
 import ScanImageTiffReader.ScanImageTiffReader;
 
 %Extract Data
-reader = ScanImageTiffReader(pathname);
-stack = reader.data;
-
-% --- Previous Version ----------
-% info = imfinfo(pathname);
-% 
-% nX = info(1).Width;
-% nY = info(1).Height;
-% nZ = numel(info);
-% D=zeros(nX,nY,nZ,'uint16');  %Initialize
-% 
-% % Populate 3D array with imaging data from TIF file
-% for i=1:nZ
-%     D(:,:,i)=imread(pathname,i,'Info',info);
-% end
+reader = ScanImageTiffReader(full_path); %Create reader object
+stack = permute(reader.data,[2,1,3]); %TiffReader transposes data relative to TiffLib/ImageJ (and every other MATLAB reader)
+descriptions = reader.descriptions; %Frame-varying metadata
+metadata = reader.metadata(); %Frame-invariant metadata
 
 %---------------------------------------------------------------------------------------------------
 % Comment 2202118 MJ Siniscalchi:
 %
-% ScanImage TiffReader Class!
+% Use ScanImage TiffReader Class! Waaay faster than previous approaches
+% -just requires additional parsing of header info)
+% -unfortunately, it seems to transpose the data...why??
 %
 %---------------------------------------------------------------------------------------------------
 % Comment 191212 MJ Siniscalchi:
@@ -42,7 +31,20 @@ stack = reader.data;
 %Elapsed time is 377.836698 seconds. (2019b) - tremendously slower (??)
 
 %-----------------------***PREVIOUS VERSIONS***-----------------------------------------------------
-
+%
+% info = imfinfo(pathname);
+% 
+% nX = info(1).Width;
+% nY = info(1).Height;
+% nZ = numel(info);
+% D=zeros(nX,nY,nZ,'uint16');  %Initialize
+% 
+% % Populate 3D array with imaging data from TIF file
+% for i=1:nZ
+%     D(:,:,i)=imread(pathname,i,'Info',info);
+% end
+%
+% -------------------------------------
 % AC Kwan: code below tested 3.37sec 
 %http://www.matlabtips.com/how-to-load-tiff-stacks-fast-really-fast/
 % t = Tiff(pathname,'r');

@@ -25,7 +25,7 @@ function ref_img = getRefImg(mat_path,stackInfo,nFrames)
 start_frame = max([1, round(0.5*sum(stackInfo.nFrames)-0.5*nFrames)]); %Get frames from ~halfway through session.
 stackIdx(1) = find(cumsum(stackInfo.nFrames)>=start_frame,1,'first'); %idx of stack that contains first frame in segment for initial averaging
 stackIdx(2) = find(cumsum(stackInfo.nFrames)>=start_frame+nFrames-1,1,'first'); %idx of stack that contains last frame
-refStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames); %to store all frames for averaging
+refStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames,stackInfo.class); %to store all frames for averaging
 
 f1_global = 1 + [0; cumsum(stackInfo.nFrames(1:end-1))]; %Global idx for first frame of each stack
 jj = 1; %Frame counter for full stack used for averaging (var tempStack). 

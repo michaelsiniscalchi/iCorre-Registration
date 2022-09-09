@@ -6,7 +6,6 @@
 %INPUT ARGUMENTS
 % path_names, options_in, options_label, template_in, max_err, max_reps
 %
-%
 %OUTPUTS
 %
 %   template_out:   Final mean projection after registration
@@ -20,7 +19,8 @@
 %Edits:
 %       180710 Arg 1, 'path_names' is now a cell array containing complete paths to the .mat files for each stack.
 %       180714 There seemed to be a problem with col_shift being fed in with the options struct for nReps>1.
-%               (Instead, try saving once for apply_shifts().
+%              Use 'correct_bidir' only for first (seed) iteration.
+%       220318 
 %--------------------------------------------------------------------------
 
 function [ template_out, nReps, err_mat ] = iCorre( path_names, options_in, options_label, template_in, max_err, max_reps )
@@ -29,7 +29,8 @@ function [ template_out, nReps, err_mat ] = iCorre( path_names, options_in, opti
 err = max_err+1; %initialize arbitrarily > than max_err for first iteration
 nReps = 0; %initialize
 
-local_avg = zeros(size(template_in,1),size(template_in,2),numel(path_names),'uint16'); %matrix of mean frames taken from each stack; used for new template (=grand avg).
+local_avg = zeros(size(template_in,1),size(template_in,2),numel(path_names),...
+    'like',template_in); %matrix of mean frames taken from each stack; used for new template (=grand avg).
 
 %Disable parfor warning
 w = warning; %get warning state
@@ -58,10 +59,16 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
         if isfield(S,'options')
             options = S.options; %Load struct so field can be appended for new registration type
         end
-        %         [stack,shifts,~,options.(options_label),~] = ...
-        %             normcorre_batch_even(S.stack,options_in,template_in); %normcorre_batch_even uses grid squares of equal size
-        [stack,shifts,~,options.(options_label),~] = ...
-            normcorre_batch(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+
+        %Even distribution of patches for NRMC
+        if options_label=="NRMC"
+            [stack,shifts,~,options.(options_label),~] = ... %Only cubic shifts are permitted in normcorre_batch_even()
+                normcorre_batch_even(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+        else
+            [stack,shifts,~,options.(options_label),~] = ...
+                normcorre_batch(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+        end
+
 
         %Obtain local reference for later grand avg frame to be used as new template
         local_avg(:,:,i) = getCorrFrames(stack, 80); %Use top 20% most correlated frames
