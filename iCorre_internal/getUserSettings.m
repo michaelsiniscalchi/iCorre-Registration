@@ -5,13 +5,16 @@
 %
 %---------------------------------------------------------------------------------------------------
 
-function [ root_dir, search_filter, params ] = getUserSettings(path_settings)
+function [ root_dir, search_filter, params ] = getUserSettings( path_settings, inputBox_TF )
 
 %% CHECK FOR SAVED SETTINGS
 
 %If a path is specified, use those settings
 if nargin < 1
-    path_settings = string(fullfile(pwd,'user_settings'));
+    path_settings = string(fullfile(pwd,'user_settings.mat'));
+end
+if nargin < 2
+    inputBox_TF = true; %Bring up input box for user input
 end
 
 %% FIXED PARAMETERS
@@ -56,12 +59,15 @@ if exist(path_settings,'file')
     settings = s.settings;
 end
 
-opts = struct('Resize','on','WindowStyle','modal','Interpreter','none');
-settings(:,3) = string(inputdlg(settings(:,1),'*** iCORRE: Set Image Registration Parameters ***',1,settings(:,3),opts));
+%% Get user input and save settings
 
-%% Save settings
-save_path = settings(strcmp(settings(:,2),"path_settings"),3);
-save(save_path,'settings');
+if inputBox_TF
+    opts = struct('Resize','on','WindowStyle','modal','Interpreter','none');
+    settings(:,3) = string(inputdlg(settings(:,1),...
+        '*** iCORRE: Set Image Registration Parameters ***',1,settings(:,3),opts));
+    save_path = settings(strcmp(settings(:,2),"path_settings"),3);
+    save(save_path,'settings');
+end
 
 %% Convert to correct MATLAB classes
 

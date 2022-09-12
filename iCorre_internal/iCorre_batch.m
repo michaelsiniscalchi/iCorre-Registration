@@ -25,10 +25,14 @@ function [ status, err_msg ] = iCorre_batch(root_dir,search_filter,params)
 
 %% Set Parameters (if not included as input args)
 if nargin<3
-    params.max_reps = [1,1,1]; %maximum number of repeats; [seed, rigid, non-rigid]
-    params.max_err = 1; %threshold abs(dx)+abs(dy) per frame
-    params.nFrames_seed = 1000; %nFrames to AVG for for initial ref image
-    if nargin<2
+    if exist(fullfile(root_dir,'user_settings.mat'),'file')
+        [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
+    else
+        params.max_reps = [1,1,1]; %maximum number of repeats; [seed, rigid, non-rigid]
+        params.max_err = 1; %threshold abs(dx)+abs(dy) per frame
+        params.nFrames_seed = 1000; %nFrames to AVG for for initial ref image
+    end
+    if nargin<2 || ~exist("search_filter","var")
         search_filter = '';
     end
 end
@@ -36,12 +40,11 @@ end
 %% Check Inputs
 params = iCorreCheckParams(params); %**Work-in-progress**
 
-
 %% Get list of data directories
 temp = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
 data_dirs = {temp.name};
-temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..'));
-data_dirs = data_dirs(temp); %remove '.' and '..' from directory list
+temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(data_dirs));
+data_dirs = data_dirs(temp); %remove '.', '..', and any files from directory list
 disp('Directories for movement correction:');
 disp(data_dirs');
 
