@@ -102,6 +102,9 @@ for i = 1:size(settings,1)
     end
 end
 
+%Additional params not included in input()
+params.read_method = 'TiffLib'; %'imread','TiffLib','scim'
+
 %Save params as struct
 save(save_path,'-struct','params','-append');
 
