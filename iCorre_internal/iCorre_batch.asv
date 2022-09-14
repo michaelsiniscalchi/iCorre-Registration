@@ -26,13 +26,12 @@ function [ status, err_msg ] = iCorre_batch(root_dir,search_filter,params)
 %% Set Parameters (if not included as input args)
 if nargin<3
     if exist(fullfile(root_dir,'user_settings.mat'),'file')
-        params = 
+        [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
     else
-        params.max_reps = [1,1,1]; %maximum number of repeats; [seed, rigid, non-rigid]
-        params.max_err = 1; %threshold abs(dx)+abs(dy) per frame
-        params.nFrames_seed = 1000; %nFrames to AVG for for initial ref image
+        warning("File user_settings.mat not found in root directory. Creating file with the default settings...")
+        [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
     end
-    if nargin<2
+    if nargin<2 || ~exist("search_filter","var")
         search_filter = '';
     end
 end
@@ -40,12 +39,11 @@ end
 %% Check Inputs
 params = iCorreCheckParams(params); %**Work-in-progress**
 
-
 %% Get list of data directories
 temp = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
 data_dirs = {temp.name};
-temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..'));
-data_dirs = data_dirs(temp); %remove '.' and '..' from directory list
+temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(data_dirs));
+data_dirs = data_dirs(temp); %remove '.', '..', and any files from directory list
 disp('Directories for movement correction:');
 disp(data_dirs');
 
@@ -86,9 +84,6 @@ for i=1:numel(data_dirs)
         % Create remaining directories
         field_names = fieldnames(dirs);
         for j=1:numel(field_names)
-%             if ~exist(dirs.(field_names{j}),'dir')
-%                 mkdir(dirs.(field_names{j}));
-%             end
             create_dirs(dirs.(field_names{j}));
         end
         
@@ -118,6 +113,7 @@ for i=1:numel(data_dirs)
             struct(...
             'chan_number',params.ref_channel,...
             'crop_margins',params.crop_margins,...
+            'read_method',params.read_method,...
             'extract_I2C',params.saveI2CData)); %Batch convert all TIF stacks to MAT and get info.
         save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
         
@@ -231,7 +227,11 @@ for i=1:numel(data_dirs)
     else
         status(i) = false;
         err_msg{i} = err;
-        save(paths.regData,'err_msg','-append'); %save error msg
+        if exist(paths.regData,'file')
+            save(paths.regData,'err_msg','-append'); %save error msg
+        else
+            save(paths.regData,'err_msg'); %save error msg
+        end
     end
     
     clearvars '-except' root_dir data_dirs params i status err_msg;

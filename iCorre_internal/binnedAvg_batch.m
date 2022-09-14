@@ -3,7 +3,7 @@ function binnedAvg_batch( stack_path, save_dir, stackInfo, bin_width )
 tic; %Start timer
 
 % Check if input is TIF or MAT 
-[pathname,filename,ext] = fileparts(stack_path{1});
+[~,filename,ext] = fileparts(stack_path{1});
 stack_is_tif = strcmp(ext,'.tif');
 stack_is_mat = strcmp(ext,'.mat');
 

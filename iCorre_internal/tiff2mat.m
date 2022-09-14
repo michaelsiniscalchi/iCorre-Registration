@@ -17,6 +17,7 @@ if nargin<3
     options.chan_number     = []; %For interleaved 2-color imaging; channel to convert.
     options.crop_margins    = []; %Width of margins on each side of image; scalar or [top,bottom,left,right]
     options.extract_I2C     = false; %Flag to extract I2C data from TIFF header
+    options.read_method     = 'TiffLib';
 end
  
 for optFields = ["chan_number","crop_margins","extract_I2C"]
@@ -26,7 +27,6 @@ for optFields = ["chan_number","crop_margins","extract_I2C"]
 end
 
 % Convert each TIF File and Extract Specified Header Info
-
 descArray = cell(numel(tif_paths),1); %Initialize cell array of image descriptions
 for i = 1:numel(tif_paths)
     
@@ -37,22 +37,22 @@ for i = 1:numel(tif_paths)
     disp(['Converting ' source '...']);
     if i==1 % Extract general parameters for whole session from first stack
         %Metadata from ScanImage Header
-        [stack, description, metadata] =  loadtiffseq(tif_paths{i}); % load raw stack (.tif)
+        [stack, description, metadata] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
         stackInfo = getStackInfo(stack, description{1}, metadata); %Initialize struct 'stackInfo'
         %TIFF Tags
-        tags = getTiffTags(tif_paths{i});
+        tags = getTiffTags(tif_paths{i}); %Tags explicitly specified in this function
     else % Load Remaining Stacks and Extract Image Descriptions         
-        [stack, description] =  loadtiffseq(tif_paths{i}); % load raw stack (.tif)
+        [stack, description] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
     end
 
     %Check for correction based on structural channel
     if options.chan_number 
-        if ~ismember(stackInfo.chans, options.chan_number)
-            error(['Error: Specified channel number (', num2str(options.chan_number), ') not found.']);
-        else
+%         if ~ismember(stackInfo.chans, options.chan_number)
+%             error(['Error: Specified channel number (', num2str(options.chan_number), ') not found.']);
+%         else
             stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
             description = description(1:2:end); %Remove superfluous image descriptions
-        end
+%         end
     end
 
     %Crop images if specified

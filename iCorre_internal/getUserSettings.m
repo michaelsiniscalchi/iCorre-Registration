@@ -102,5 +102,9 @@ for i = 1:size(settings,1)
     end
 end
 
+%Save params as struct
+save(save_path,'-struct','params','-append');
+
+%Additional Outputs for iCorre_batch()
 root_dir        = params.root_dir;
 search_filter   = params.search_filter;
