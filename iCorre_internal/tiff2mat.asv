@@ -24,9 +24,12 @@ for optFields = ["chan_number","crop_margins","extract_I2C"]
     if ~isfield(options,optFields)
         options.(optFields) = [];
     end
+    if ~isfield(options,"read_method")
+        options.read_method = 'TiffLib';
+    end
 end
 
-% Convert each TIF File and Extract Specified Header Info
+%% Convert each TIF File and Extract Specified Header Info
 descArray = cell(numel(tif_paths),1); %Initialize cell array of image descriptions
 for i = 1:numel(tif_paths)
     
@@ -47,12 +50,8 @@ for i = 1:numel(tif_paths)
 
     %Check for correction based on structural channel
     if options.chan_number 
-%         if ~ismember(stackInfo.chans, options.chan_number)
-%             error(['Error: Specified channel number (', num2str(options.chan_number), ') not found.']);
-%         else
             stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
             description = description(1:2:end); %Remove superfluous image descriptions
-%         end
     end
 
     %Crop images if specified
@@ -67,7 +66,7 @@ for i = 1:numel(tif_paths)
 
     %Populate array of image descriptions
     if options.extract_I2C
-        descArray{i} = description;
+        descArray{i} = description{:};
     end
 
     %Store additional info
