@@ -30,3 +30,25 @@ options = struct(...
             'read_method',params.read_method,...
             'extract_I2C',params.saveI2CData); %Batch convert all TIF stacks to MAT and get info.
 stackInfo = tiff2mat(paths.raw, paths.mat, options);
+
+%%
+%%
+clearvars;
+root_dir = "W:\iCorre-test\Data\";
+dirs.data = ["220309 M413 T6 pseudorandom"];
+dirs.raw = string(fullfile(root_dir,dirs.data,"raw"));
+
+temp = dir(fullfile(dirs.raw,'*.tif'));
+file_names = cell(numel(temp),1);
+for i=1:numel(temp)
+    paths.raw(i) = fullfile(dirs.raw,temp(i).name); %Raw TIFFs for registration
+end
+
+tic;
+ImageDescription = cell(numel(paths.raw),1);
+for i=1:numel(paths.raw)
+%     ImageDescription{i} = getTiffTags(paths.raw(i));
+    t = Tiff(paths.raw(i));
+    ImageDescription{i} =  t.getTag("ImageDescription");
+end
+toc

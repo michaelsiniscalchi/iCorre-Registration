@@ -28,7 +28,7 @@ if nargin<3
     if exist(fullfile(root_dir,'user_settings.mat'),'file')
         [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
     else
-        warning("File user_settings.mat not found in root directory. Creating file with the default settings...")
+        warning("File 'user_settings.mat' not found in root directory. Initializing file with the default settings...")
         [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
     end
     if nargin<2 || ~exist("search_filter","var")
@@ -89,11 +89,9 @@ for i=1:numel(data_dirs)
         
         % Define All Filepaths Based on Data Filename
         temp = dir(fullfile(dirs.raw,'*.tif'));
-        file_names = cell(numel(temp),1);
         for j=1:numel(temp)
-            file_names{j} = temp(j).name;
-            paths.raw{j} = fullfile(dirs.raw,file_names{j}); %Raw TIFFs for registration
-            paths.mat{j} = fullfile(dirs.mat,[file_names{j}(1:end-4) '.mat']); %MAT file (working file for read/write across iterations)
+            paths.raw{j} = fullfile(dirs.raw,temp(j).name); %Raw TIFFs for registration
+            paths.mat{j} = fullfile(dirs.mat,[temp(j).name(1:end-4) '.mat']); %MAT file (working file for read/write across iterations)
         end
         
         % Additional Paths for Metadata

@@ -8,7 +8,7 @@
 %           -220310mjs Updated using TIFF library and ScanImageTiffReader
 %--------------------------------------------------------------------------
 
-function stackInfo = tiff2mat(tif_paths, mat_paths, options)
+function stackInfo = tiff2mat_parallel(tif_paths, mat_paths, options)
 
 tic; %For command window output
 
@@ -44,7 +44,8 @@ for i = 1:numel(tif_paths)
         stackInfo = getStackInfo(stack, description{1}, metadata); %Initialize struct 'stackInfo'
         %TIFF Tags
         tags = getTiffTags(tif_paths{i}); %Tags explicitly specified in this function
-    else % Load Remaining Stacks and Extract Image Descriptions         
+    else % Load Remaining Stacks and Extract Image Descriptions 
+        %GET DESCRIPTIONS FROM TIFF TAG "IMAGEDESCRIPTION"
         [stack, description] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
     end
 
@@ -64,9 +65,9 @@ for i = 1:numel(tif_paths)
         end
     end
 
-    %Populate array of image descriptions
+    %Populate array of image descriptions DO OUTSIDE PARFOR
     if options.extract_I2C
-        descArray{i} = description{:};
+        descArray{i} = description(:);
     end
 
     %Store additional info

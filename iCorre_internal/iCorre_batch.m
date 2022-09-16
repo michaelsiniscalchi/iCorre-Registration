@@ -40,17 +40,17 @@ end
 params = iCorreCheckParams(params); %**Work-in-progress**
 
 %% Get list of data directories
-temp = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
-data_dirs = {temp.name};
-temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(data_dirs));
-data_dirs = data_dirs(temp); %remove '.', '..', and any files from directory list
+files = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
+data_dirs = {files.name};
+files = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(data_dirs));
+data_dirs = data_dirs(files); %remove '.', '..', and any files from directory list
 disp('Directories for movement correction:');
 disp(data_dirs');
 
 %% Setup parallel pool for faster processing
 if isempty(gcp('nocreate'))
     try
-        parpool
+        parpool([4 128])
     catch err
         warning(err.message);
     end
@@ -88,12 +88,10 @@ for i=1:numel(data_dirs)
         end
         
         % Define All Filepaths Based on Data Filename
-        temp = dir(fullfile(dirs.raw,'*.tif'));
-        file_names = cell(numel(temp),1);
-        for j=1:numel(temp)
-            file_names{j} = temp(j).name;
-            paths.raw{j} = fullfile(dirs.raw,file_names{j}); %Raw TIFFs for registration
-            paths.mat{j} = fullfile(dirs.mat,[file_names{j}(1:end-4) '.mat']); %MAT file (working file for read/write across iterations)
+        files = dir(fullfile(dirs.raw,'*.tif'));
+        for j=1:numel(files)
+            paths.raw{j} = fullfile(dirs.raw,files(j).name); %Raw TIFFs for registration
+            paths.mat{j} = fullfile(dirs.mat,[files(j).name(1:end-4) '.mat']); %MAT file (working file for read/write across iterations)
         end
         
         % Additional Paths for Metadata

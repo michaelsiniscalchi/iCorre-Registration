@@ -1,6 +1,11 @@
 
 function [ stack, descriptions, metadata ] = loadtiffseq( full_path, method )
 
+%Try to avoid using imfinfo.
+%Get image Height,Width, and Descriptions from Tiff tags
+%For pre-allocation (NaNs), add an argument or set at an estimate
+%Then truncate NaNs
+
 if nargin<2
     method = 'TiffLib'; %Default; slower than ScanImageTiffReader, but does not require OS-specific MEX files
 end
