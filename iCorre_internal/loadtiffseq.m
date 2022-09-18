@@ -1,38 +1,45 @@
 
-function [ stack, descriptions, metadata ] = loadtiffseq( full_path, method )
-
-%Try to avoid using imfinfo.
-%Get image Height,Width, and Descriptions from Tiff tags
-%For pre-allocation (NaNs), add an argument or set at an estimate
-%Then truncate NaNs
+function [ stack, tags, metadata ] = loadtiffseq( full_path, method )
 
 if nargin<2
     method = 'TiffLib'; %Default; slower than ScanImageTiffReader, but does not require OS-specific MEX files
 end
 
 %Initialize stack and get image descriptions
-if ~strcmp(method,'scim')
-    info = imfinfo(full_path);
-    nX = info(1).Width;
-    nY = info(1).Height;
-    nZ = numel(info);
-    stack = zeros(nX,nY,nZ,'int16');
-    descriptions = {info.ImageDescription};
-    metadata = []; %Not available without ScanImageTiffReader
+% if strcmp(method,'imread') || strcmp(method,'TiffLib')
+%     info = imfinfo(full_path);
+%     nX = info(1).Width;
+%     nY = info(1).Height;
+%     nZ = numel(info);
+%     stack = zeros(nX,nY,nZ,'int16');
+%     descriptions = {info.ImageDescription};
+%     metadata = []; %Not available without ScanImageTiffReader
+% end
+
+%Get specified tags
+t = Tiff(full_path);
+tagNames = ["ImageWidth","ImageLength","BitsPerSample","SamplesPerPixel",...
+    "SampleFormat","Compression","PlanarConfiguration","Photometric"]; %,"ImageDescription"
+for i = 1:numel(tagNames)
+    tags.(tagNames(i)) =  t.getTag(tagNames(i));
 end
+metadata = []; %Only available with ScanImageTiffReader
 
 switch method
-    case 'imread'
-        % Populate 3D array with imaging data from TIF file
-        for i=1:nZ
-            stack(:,:,i)=imread(full_path,i,'Info',info);
+    
+    case 'TiffLib'    
+        %Initialize outputs
+        while ~t.lastDirectory
+            t.nextDirectory;
         end
+        nFrames = t.currentDirectory;
+        stack = zeros(tags.ImageLength, tags.ImageWidth, nFrames,'int16');
 
-    case 'TiffLib'
-        t = Tiff(full_path);
-        for i=1:nZ
-            setDirectory(t,i);
-            stack(:,:,i) = read(t);
+        %Read frames
+        for i = 1:nFrames
+            t.setDirectory(i);
+            stack(:,:,i) = t.read();
+            tags.ImageDescription{i,1} =  t.getTag("ImageDescription"); %Frame-specific I2C data
         end
         close(t);
 
@@ -42,7 +49,7 @@ switch method
         %Extract Data
         reader = ScanImageTiffReader(full_path); %Create reader object
         stack = permute(reader.data,[2,1,3]); %TiffReader transposes data relative to TiffLib/ImageJ (and every other MATLAB reader)
-        descriptions = reader.descriptions; %Frame-varying metadata
+%         descriptions = reader.descriptions; %Frame-varying metadata; also obtained with tags.ImageDescription
         metadata = reader.metadata(); %Frame-invariant metadata
 end
 

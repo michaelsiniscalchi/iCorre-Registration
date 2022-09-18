@@ -10,9 +10,9 @@ if nargin < 4
 end
 %Check if filetype for save is TIFF or MAT
 if ~all(strcmp(options.fileType_save,["tiff","mat"]))
-    fileType_save = {'tiff'}; %Default: save to TIFF
+    fileType_save = "tiff"; %Default: save to TIFF
     warning('applyShifts_batch.m');
-    warning('Argument 5 must be a cell array containing one or both the following: "tiff" or "mat".');
+    warning('options.fileType_save must be a string vector containing one or both the following: "tiff" or "mat".');
     warning('Saving stack as TIFF.');
 else
     fileType_save = options.fileType_save; 

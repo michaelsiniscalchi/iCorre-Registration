@@ -48,25 +48,29 @@ settings = [...
     
     "Extract I2C Data from TIFF Header?"                                "saveI2CData",      "T";...
 
-    "Save Concatenated Copy of Corrected Stacks? (T/F)",                "do_stitch",        "T";...
+    "Filetype(s) For Registered Stacks (ie, 'mat','tiff','mat+tiff'):"  "fileType_save",    "tiff";...
+
+    "Save Concatenated TIFF of Corrected Stacks? (T/F)",                "do_stitch",        "T";...
     "Downsample Factor for Concatenated Stack",                         "bin_width",        "30";...
-    "Delete MAT files at Completion? (T/F)",                            "delete_mat",       "F";...
+    
+    "Delete Reference MAT files at Completion? (T/F)",                  "delete_mat",       "F";...
     
     ];
 
+%% Get user input and save settings
 if exist(path_settings,'file')
     s = load(path_settings);
     settings = s.settings;
+elseif ~inputBox_TF
+    warning(['No settings found at ' path_settings]);
+    disp(['Saving default settings as ' path_settings]);
 end
-
-%% Get user input and save settings
 
 if inputBox_TF
     opts = struct('Resize','on','WindowStyle','modal','Interpreter','none');
     settings(:,3) = string(inputdlg(settings(:,1),...
         '*** iCORRE: Set Image Registration Parameters ***',1,settings(:,3),opts));
-    save_path = settings(strcmp(settings(:,2),"path_settings"),3);
-    save(save_path,'settings');
+    path_settings = settings(strcmp(settings(:,2),"path_settings"),3);
 end
 
 %% Convert to correct MATLAB classes
@@ -93,7 +97,14 @@ for i = 1:size(settings,1)
         case "maxRepRMC"
             maxReps = str2double(settings(ismember(settings(:,2),["maxRepRMC","maxRepNRMC"]),3))';
             params.max_reps = [maxRepSeed, maxReps]; %Number of repetitions for ref. image (seed) fixed at 1
+        case "fileType_save" 
+            if strcmp(settings{i,3},'mat+tiff')
+                params.(settings{i,2}) = ["mat","tiff"];
+            else
+                params.(settings{i,2}) = string(settings{i,3});
+            end
     end
+
     switch settings{i,3} %Logical
         case "T"
             params.(settings{i,2}) = true;
@@ -106,7 +117,8 @@ end
 params.read_method = 'TiffLib'; %'imread','TiffLib','scim'
 
 %Save params as struct
-save(save_path,'-struct','params','-append');
+save(path_settings,'settings'); %String array
+save(path_settings,'-struct','params','-append'); %Structure
 
 %Additional Outputs for iCorre_batch()
 root_dir        = params.root_dir;

@@ -23,23 +23,10 @@
 
 function [ status, err_msg ] = iCorre_batch(root_dir,search_filter,params)
 
-%% Set Parameters (if not included as input args)
-if nargin<3
-    if exist(fullfile(root_dir,'user_settings.mat'),'file')
-        [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
-    else
-        warning("File 'user_settings.mat' not found in root directory. Initializing file with the default settings...")
-        [~, ~, params] = getUserSettings(string(fullfile(root_dir,'user_settings.mat')), false);
-    end
-    if nargin<2 || ~exist("search_filter","var")
-        search_filter = '';
-    end
-end
-
-%% Check Inputs
-params = iCorreCheckParams(params); %**Work-in-progress**
-
 %% Get list of data directories
+if nargin<2 || ~exist("search_filter","var")
+    search_filter = '';
+end
 files = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
 data_dirs = {files.name};
 files = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(data_dirs));
@@ -59,6 +46,23 @@ end
 %% Get directories and filenames
 for i=1:numel(data_dirs)
     try
+
+        %Get Hyperparameters (if not included as input args)
+        if nargin<3
+            %Load from MAT file
+            %Precedence: params argument, then settings in session dir, then batch dir 
+            session_settings = fullfile(root_dir,data_dirs{i},'user_settings.mat');
+            if exist(session_settings,'file')
+                [~, ~, params] = getUserSettings(session_settings, false);
+            elseif exist(fullfile(root_dir,'user_settings.mat'),'file')
+                [~, ~, params] = getUserSettings(fullfile(root_dir,'user_settings.mat'), false);
+            else %If no MAT file, use defaults and save MAT
+                warning("File 'user_settings.mat' not found in root directory. Initializing file with the default settings...")
+                [~, ~, params] = getUserSettings(fullfile(root_dir,'user_settings.mat'), false);
+            end
+        end
+        disp(['*** Hyperparameters for ' data_dirs{i} ' ***']);
+        disp(params);
         
         % Define & Create Subdirectories
         dirs.main = fullfile(root_dir,data_dirs{i});
@@ -188,13 +192,9 @@ for i=1:numel(data_dirs)
             if params.do_stitch
                 disp('Getting global downsampled stack (binned avg.) and max projection from registered reference channel...');
                 binnedAvg_batch(paths.mat,dirs.save_ref,stackInfo,params.bin_width); %Save binned avg and projection to ref-channel dir
-                if params.delete_mat
-                        rmdir(dirs.mat,'s'); %DELETE .MAT dir...
-                end
                 disp('Getting global downsampled stack (binned avg.) and max projection of co-registered frames...');
                 binnedAvg_batch(paths.save_tiff,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
-            end
-            
+            end        
         else
             %Save registered stacks as .TIF
             paths  = applyShifts_batch(paths,dirs,stackInfo,[],params); %Apply shifts and save .TIF files
@@ -202,17 +202,17 @@ for i=1:numel(data_dirs)
                 disp('Getting global downsampled stack (binned avg.) and max projection of registered frames...');
                 binnedAvg_batch(paths.save_tiff,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
             end
-            if params.delete_mat
-                rmdir(dirs.mat,'s'); %DELETE .MAT dir...
-            end
         end
         
-        clearvars S;
         run_times.saveTif = toc;
         save(paths.regData,'run_times','-append'); %save parameters
         
-        clearvars '-except' root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;
+        %Remove temporary MAT files
+        if params.delete_mat
+            rmdir(dirs.mat,'s'); %DELETE .MAT dir...
+        end
         
+        clearvars '-except' root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;       
         
     catch err
         disp(err);
