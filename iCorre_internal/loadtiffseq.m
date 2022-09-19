@@ -1,8 +1,13 @@
 
-function [ stack, tags, metadata ] = loadtiffseq( full_path, method )
+function [ stack, tags, ImageDescription] = loadtiffseq( full_path, method )
 
 if nargin<2
     method = 'TiffLib'; %Default; slower than ScanImageTiffReader, but does not require OS-specific MEX files
+end
+
+get_descriptions = true;
+if nargout<2
+    get_descriptions = false;
 end
 
 %Initialize stack and get image descriptions
@@ -39,7 +44,9 @@ switch method
         for i = 1:nFrames
             t.setDirectory(i);
             stack(:,:,i) = t.read();
-            tags.ImageDescription{i,1} =  t.getTag("ImageDescription"); %Frame-specific I2C data
+            if get_descriptions
+                ImageDescription{i,1} =  t.getTag("ImageDescription"); %Frame-specific I2C data
+            end
         end
         close(t);
 

@@ -82,6 +82,14 @@ disp('Scim:');
 toc
 
 %% loadtiffseq()
+% tic;
+% [stack, tags, metadata] =  loadtiffseq(fullpath,'TiffLib'); % load raw stack (.tif)
+% toc
+
 tic;
-[stack, tags, metadata] =  loadtiffseq(fullpath,'TiffLib'); % load raw stack (.tif)
+[stack, ImageDescription, ~] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
+toc
+
+tic;
+[stack, ~, ~] =  loadtiffseq2(tif_paths{i},options.read_method); % load raw stack (.tif)
 toc

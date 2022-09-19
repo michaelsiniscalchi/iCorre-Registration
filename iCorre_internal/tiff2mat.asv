@@ -10,11 +10,11 @@
 %           image metadata (only useful with ScanImageTiffReader)
 %--------------------------------------------------------------------------
 
-function stackInfo = tiff2mat_parallel(tif_paths, mat_paths, options)
+function stackInfo = tiff2mat(tif_paths, mat_paths, options)
 
 tic; %For command window output
 
-% Handle Options
+%Handle options
 if nargin<3
     options.chan_number     = []; %For interleaved 2-color imaging; channel to convert.
     options.crop_margins    = []; %Width of margins on each side of image; scalar or [top,bottom,left,right]
@@ -32,6 +32,7 @@ for optFields = ["chan_number","crop_margins","extract_I2C"]
 end
 
 %% Convert each TIF File and Extract Specified Header Info
+descArray = cell(numel(tif_paths),1);
 ImageDescription = cell(numel(tif_paths),1); %Initialize cell array of image descriptions
 parfor i = 1:numel(tif_paths)
     
@@ -85,12 +86,13 @@ stackInfo.imageWidth    = Stack.tags.ImageWidth;
 stackInfo.nFrames       = nFrames(:); %Store number of frames
 stackInfo.rawFileName   = rawFileName(:); %Save original filename
 stackInfo.margins       = options.crop_margins; %[top, bottom, left, right]
-stackInfo.tags          = Stack.tags;
+stackInfo.tags          = tags;
 
 %Extract I2C Data if specified
 if options.extract_I2C
     %Concatenate cell arrays for each TIFF stack
-    stackInfo.I2C = getI2CData(vertcat(ImageDescription{:}));
+    descArray = vertcat(ImageDescription{:});
+    stackInfo.I2C = getI2CData(descArray);
 end
 
 %Console display
