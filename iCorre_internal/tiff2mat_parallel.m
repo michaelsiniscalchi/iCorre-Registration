@@ -38,7 +38,7 @@ parfor i = 1:numel(tif_paths)
     %Store name of source file
     [~,filename,ext] = fileparts(tif_paths{i});
     source = [filename ext]; 
-    disp(['Converting ' source '...']);
+    disp(['Converting [parallel] ' source '...']);
     
     % Load Stack and Extract TIFF tags 
     [stack, tags, ImageDescription{i}] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
