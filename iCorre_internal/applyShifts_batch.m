@@ -45,7 +45,7 @@ for i = 1:numel(paths.mat)
         stack = stack(:,:,chan_number:2:end); %Get single channel out of interleaved frames
     end
     %Crop if necessary
-    if isfield(stackInfo,'margins')
+    if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
         stack = cropStack(stack, stackInfo.margins);
     end
 
