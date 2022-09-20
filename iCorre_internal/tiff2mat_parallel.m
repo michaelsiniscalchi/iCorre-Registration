@@ -48,7 +48,7 @@ parfor i = 1:numel(tif_paths)
             stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
             tags.ImageDescription = tags.ImageDescription(options.chan_number:2:end); %Remove superfluous image descriptions
     end
-    ImageDescription(i) = tags.ImageDescription;
+    ImageDescription{i} = tags.ImageDescription;
     
     %Crop images if specified
     if options.crop_margins

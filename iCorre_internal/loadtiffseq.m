@@ -1,5 +1,5 @@
 
-function [ stack, tags, ImageDescription] = loadtiffseq( full_path, method )
+function [ stack, tags ] = loadtiffseq( full_path, method )
 
 if nargin<2
     method = 'TiffLib'; %Default; slower than ScanImageTiffReader, but does not require OS-specific MEX files

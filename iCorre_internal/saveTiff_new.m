@@ -25,18 +25,18 @@ function saveTiff( img_stack, tags, save_path )
 disp(join(['Saving stack as ' save_path '...']));
 
 %Extract and store frame-specific tags
-if isfield(tags,'ImageDescription') && ~isempty(tags.ImageDescription)
+if isfield(tags,'ImageDescription')...
+        && numel(tags.ImageDescription)==size(img_stack,3)
     ImageDescription = tags.ImageDescription;
-    tags = rmfield(tags,'ImageDescription');
 end
+tags = rmfield(tags,'ImageDescription'); %Valid tags need to be type CHAR
 
 %Write TIFF
 t = Tiff(save_path,'w'); %open/create tif for writing
 for i = 1:size(img_stack,3) %create write dir, tag, and write subsequent frames
-    t.writeDirectory();
+    t.writeDirectory;
     t.setTag(tags); %Frame-invariant tags
-    if exist('ImageDescription','var')
-        disp('Setting ImageDescription...');
+    if exist('ImageDescription','var') 
         t.setTag('ImageDescription',ImageDescription{i});
     end
     t.write(img_stack(:,:,i));
