@@ -21,7 +21,7 @@ end
 %     metadata = []; %Not available without ScanImageTiffReader
 % end
 
-%Get specified tags
+%Get frame-invariant tags
 t = Tiff(full_path);
 tagNames = ["ImageWidth","ImageLength","BitsPerSample","SamplesPerPixel",...
     "SampleFormat","Compression","PlanarConfiguration","Photometric"]; %,"ImageDescription"
@@ -44,8 +44,8 @@ switch method
         for i = 1:nFrames
             t.setDirectory(i);
             stack(:,:,i) = t.read();
-            if get_descriptions
-                ImageDescription{i,1} =  t.getTag("ImageDescription"); %Frame-specific I2C data
+            if get_descriptions %Frame-specific tags: I2C data, etc.
+                tags.ImageDescription{i,1} =  t.getTag("ImageDescription");
             end
         end
         close(t);

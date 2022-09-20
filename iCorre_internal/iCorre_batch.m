@@ -27,10 +27,10 @@ function [ status, err_msg ] = iCorre_batch(root_dir,search_filter,params)
 if nargin<2 || ~exist("search_filter","var")
     search_filter = '';
 end
-files = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
-data_dirs = {files.name};
-files = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(data_dirs));
-data_dirs = data_dirs(files); %remove '.', '..', and any files from directory list
+temp = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
+data_dirs = {temp.name};
+temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(fullfile(root_dir,data_dirs)));
+data_dirs = data_dirs(temp); %remove '.', '..', and any files from directory list
 disp('Directories for movement correction:');
 disp(data_dirs');
 

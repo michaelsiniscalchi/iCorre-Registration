@@ -14,7 +14,7 @@ function stackInfo = tiff2mat(tif_paths, mat_paths, options)
 
 tic; %For command window output
 
-%Handle options
+% Handle Options
 if nargin<3
     options.chan_number     = []; %For interleaved 2-color imaging; channel to convert.
     options.crop_margins    = []; %Width of margins on each side of image; scalar or [top,bottom,left,right]
@@ -32,9 +32,8 @@ for optFields = ["chan_number","crop_margins","extract_I2C"]
 end
 
 %% Convert each TIF File and Extract Specified Header Info
-descArray = cell(numel(tif_paths),1);
 ImageDescription = cell(numel(tif_paths),1); %Initialize cell array of image descriptions
-parfor i = 1:numel(tif_paths)
+for i = 1:numel(tif_paths)
     
     %Store name of source file
     [~,filename,ext] = fileparts(tif_paths{i});
@@ -42,19 +41,14 @@ parfor i = 1:numel(tif_paths)
     disp(['Converting ' source '...']);
     
     % Load Stack and Extract TIFF tags 
-    [stack, tags, ImageDescription{i}] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
-
+    [stack, tags] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
+    ImageDescription(i) = tags.ImageDescription;
     %Check for correction based on structural channel
     if options.chan_number 
             stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
             ImageDescription{i} = ImageDescription{i}(1:2:end); %Remove superfluous image descriptions
     end
-
-%     %Populate array of image descriptions
-%     if options.extract_I2C
-%         descArray{i} = ImageDescription(:);
-%     end
-    
+   
     %Crop images if specified
     if options.crop_margins
         stack = cropStack(stack, options.crop_margins);
@@ -69,12 +63,11 @@ parfor i = 1:numel(tif_paths)
     nFrames(i,1) = size(stack,3); %Store number of frames
     rawFileName(i,1) = string(source); %Save original filename
     
-    %Parallel Save
+    %Save (compatible with parfor)
     M = matfile(mat_paths{i},'Writable',true);
     M.stack = stack;
     M.tags = tags;
     M.source = source;
-%     save(mat_paths{i},'stack','tags','source','-v7.3');
 end
 
 %Copy tags to stackInfo structure
@@ -86,13 +79,12 @@ stackInfo.imageWidth    = Stack.tags.ImageWidth;
 stackInfo.nFrames       = nFrames(:); %Store number of frames
 stackInfo.rawFileName   = rawFileName(:); %Save original filename
 stackInfo.margins       = options.crop_margins; %[top, bottom, left, right]
-stackInfo.tags          = tags;
+stackInfo.tags          = Stack.tags;
 
 %Extract I2C Data if specified
 if options.extract_I2C
     %Concatenate cell arrays for each TIFF stack
-    descArray = vertcat(ImageDescription{:});
-    stackInfo.I2C = getI2CData(descArray);
+    stackInfo.I2C = getI2CData(vertcat(ImageDescription{:}));
 end
 
 %Console display

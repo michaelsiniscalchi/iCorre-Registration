@@ -41,19 +41,15 @@ for i = 1:numel(tif_paths)
     disp(['Converting ' source '...']);
     
     % Load Stack and Extract TIFF tags 
-    [stack, tags, ImageDescription{i}] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
+    [stack, tags] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
 
     %Check for correction based on structural channel
     if options.chan_number 
             stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
-            ImageDescription{i} = ImageDescription{i}(1:2:end); %Remove superfluous image descriptions
+            tags.ImageDescription = tags.ImageDescription(options.chan_number:2:end); %Remove superfluous image descriptions
     end
-
-%     %Populate array of image descriptions
-%     if options.extract_I2C
-%         descArray{i} = ImageDescription(:);
-%     end
-    
+    ImageDescription(i) = tags.ImageDescription;
+   
     %Crop images if specified
     if options.crop_margins
         stack = cropStack(stack, options.crop_margins);
@@ -68,12 +64,11 @@ for i = 1:numel(tif_paths)
     nFrames(i,1) = size(stack,3); %Store number of frames
     rawFileName(i,1) = string(source); %Save original filename
     
-    %Parallel Save
+    %Save (compatible with parfor)
     M = matfile(mat_paths{i},'Writable',true);
     M.stack = stack;
     M.tags = tags;
     M.source = source;
-%     save(mat_paths{i},'stack','tags','source','-v7.3');
 end
 
 %Copy tags to stackInfo structure
@@ -85,7 +80,8 @@ stackInfo.imageWidth    = Stack.tags.ImageWidth;
 stackInfo.nFrames       = nFrames(:); %Store number of frames
 stackInfo.rawFileName   = rawFileName(:); %Save original filename
 stackInfo.margins       = options.crop_margins; %[top, bottom, left, right]
-stackInfo.tags          = Stack.tags;
+stackInfo.tags          = Stack.tags; %Frame-invariant tags
+stackInfo.tags.ImageDescription = ImageDescription; %Frame-specific
 
 %Extract I2C Data if specified
 if options.extract_I2C
