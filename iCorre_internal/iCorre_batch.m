@@ -188,7 +188,6 @@ for i=1:numel(data_dirs)
         tic;
         
         %Apply registration to second channel if needed
-        params.fileType_save = ["tiff","mat"]; %***for testing; later, add to params***
         if params.ref_channel && params.reg_channel %set to 0 for 1-channel imaging
             paths = applyShifts_batch(paths,dirs,stackInfo,params.reg_channel,params); %Apply shifts and save .TIF files
             if params.do_stitch
