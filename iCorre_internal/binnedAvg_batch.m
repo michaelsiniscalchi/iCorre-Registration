@@ -96,6 +96,7 @@ stack_mean = image2integer(mean(stack_mean,3));
 %Save as TIFF
 saveTiff(stack_downsample,stackInfo.tags,fullfile(...
     save_dir,[filename(1:end-4) '_DS' num2str(bin_width) '.tif'])); %Save downsampled stack
-saveTiff(stack_mean,stackInfo.tags,fullfile(save_dir,'stackMean.tif')); %Save max projection for entire session
+saveTiff(stack_mean,stackInfo.tags,fullfile(...
+    save_dir,[filename(1:end-4) '_stackMean.tif'])); %Save max projection for entire session
 
 toc
