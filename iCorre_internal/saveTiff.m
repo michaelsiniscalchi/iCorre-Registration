@@ -38,7 +38,6 @@ for i = 1:size(img_stack,3) %create write dir, tag, and write subsequent frames
     end
     t.setTag(tags); %Frame-invariant tags
     if exist('ImageDescription','var')
-        disp('Setting ImageDescription...');
         t.setTag('ImageDescription',ImageDescription{i});
     end
     t.write(img_stack(:,:,i));

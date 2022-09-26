@@ -58,7 +58,7 @@ for i = 1:numel(paths.mat)
     end
     %Apply shifts to master and/or follower channels
     nIFDs = size(stack,3)*(numel(chan_ID)/num_chans); %Image File Directories for TIFF format
-    stack = zeros(size(stack,1),size(stack,2),nIFDs); %Initialize output stack
+    stack = zeros(size(stack,1),size(stack,2),nIFDs,"like",stack); %Initialize output stack
     for j = 1:numel(chan_out)
         for k = 1:numel(regParams)
             stack(:,:,j:numel(chan_out):end) =...
@@ -77,6 +77,7 @@ for i = 1:numel(paths.mat)
     end
     if any(strcmp(fileType_save,"tiff")) %Save as TIFF
         save_path_tiff(i) = fullfile(dirs.save_tiff,strcat(regParams{end},'_',source,'.tif'));
+        tags = stackInfo.tags;
         if numel(chan_ID)>1 %2-Channels for Save
             tags.ImageDescription = cell(nIFDs,1);
             [tags.ImageDescription(1:2:end), tags.ImageDescription(2:2:end)] =...
