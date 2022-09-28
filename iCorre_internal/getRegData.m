@@ -3,15 +3,16 @@ function [ dirs, paths, stackInfo, params ]  = getRegData(data_dir)
 % Define & Create Subdirectories
 dirs.main = data_dir;
 dirs.raw = fullfile(data_dir,'raw');
-dirs.mat = fullfile(data_dir,'mat');
-dirs.save = fullfile(data_dir,'registered'); %to save registered stacks as TIFF
+dirs.mat = fullfile(data_dir,'mat'); %For read/write during registrationdirs.save_tiff = fullfile(data_dir,'registered tiff'); %To save registered stacks as TIFF
+dirs.save_mat = fullfile(data_dir,'registered mat'); %To save registered stacks as TIFF
+dirs.save_tiff = fullfile(data_dir,'registered tiff'); %To save registered stacks as TIFF
 
 % Load Image Stack Info and Registration Data
 stackInfo = load(fullfile(dirs.main,'stack_info.mat'));
 load(fullfile(dirs.main,'reg_info.mat'),'params');
 
 if params.ref_channel~=params.reg_channel && params.do_stitch %If two-color co-registration
-    dirs.save_ref = fullfile(data_dir,'registered_ref_channel'); %Save dir for registered reference channel
+    dirs.save_ref = fullfile(data_dir,'registered ref channel'); %Save dir for registered reference channel
 end
 
 % Define All Filepaths Based on Data Filename

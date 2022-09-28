@@ -25,7 +25,7 @@ function ref_img = getRefImg(mat_path,stackInfo,nFrames)
 start_frame = max([1, round(0.5*sum(stackInfo.nFrames)-0.5*nFrames)]); %Get frames from ~halfway through session.
 stackIdx(1) = find(cumsum(stackInfo.nFrames)>=start_frame,1,'first'); %idx of stack that contains first frame in segment for initial averaging
 stackIdx(2) = find(cumsum(stackInfo.nFrames)>=start_frame+nFrames-1,1,'first'); %idx of stack that contains last frame
-refStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames); %to store all frames for averaging
+refStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames,stackInfo.class); %to store all frames for averaging
 
 f1_global = 1 + [0; cumsum(stackInfo.nFrames(1:end-1))]; %Global idx for first frame of each stack
 jj = 1; %Frame counter for full stack used for averaging (var tempStack). 
@@ -42,12 +42,7 @@ for j = stackIdx(1):stackIdx(2)
 end
 
 %Obtain initial reference using frames with greatest pixel correlation
-[sz1,sz2,sz3] = size(refStack);
-framesAsColumns = reshape(refStack,[sz1*sz2, sz3]); %Reshape to calculate pairwise correlations
-sum_R = sum(corrcoef(framesAsColumns)); %Sum of pairwise correlations
-idx = sum_R>prctile(sum_R,90); %Take top 10% most correlated frames 
-ref_img = mean(refStack(:,:,idx),3); % initial template image
-
+ref_img = getCorrFrames(refStack, 90); %Use top 10% most correlated frames 
 % ref_img = mean(tempStack,3); % initial template image
 
 

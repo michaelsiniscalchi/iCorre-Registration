@@ -7,7 +7,7 @@
 %Author: MJ Siniscalchi, 171212
 %
 %SETUP:
-%       (1) To determine the needed files/MATLAB packages, add the main directorie and all 
+%       (1) To determine the needed files/MATLAB packages, add the main repository and all 
 %           subdirectories to the path. Then run these three lines in the console:
 %           [fList,pList] = matlab.codetools.requiredFilesAndProducts('start_iCorre.m');
 %           {fList{:}}'
@@ -24,7 +24,7 @@
 %EDITS:
 %   180709mjs Began rewrite for registration directly from raw TIF files 
 %           (previous version required concatenation prior to movement correction)
-%   220203mjs Implemented reference image based on frames with top 10%
+%   220203mjs Implemented reference image based on frames with top 20%
 %           pixel correlation. (Carson Stringer's suggestion).
 %
 %--------------------------------------------------------------------------
@@ -49,4 +49,4 @@ end
 %% Recursive Movement Correction (optional batch processing)
 
 % Main iCorre Wrapper
-[status,msg] = iCorre_batch(root_dir, search_filter, params); %iCorre_batch(root_dir,search_filter,params)
+[status, msg] = iCorre_batch(root_dir, search_filter, params); %iCorre_batch(root_dir,search_filter,params)

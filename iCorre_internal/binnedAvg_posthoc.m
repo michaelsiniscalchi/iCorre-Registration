@@ -9,43 +9,48 @@ clearvars;
 %--- Setup parameters for stitching TIFFs ----------------------------------------------------------
 
 root_dir = 'C:\Data\2-Photon Imaging';
-save_dir = 'stitched'; %Blank for parent dir
-params.scim_ver = 5;
-stitch_chan = 2; %Set to 0 for registered (1-channel) tiffs
+save_dir = []; %[] for parent dir
 bin_width = 30;
 
+options.chan_number     = 0; %For interleaved 2-color imaging; channel to convert. Set to 0 for registered (1-channel) tiffs.
+options.crop_margins    = [];
+options.save_mat        = false; %Option to save substacks and stackInfo as MAT
 %---------------------------------------------------------------------------------------------------
 
+%User-select files for stitch/downsample
 [fname,fpath] = uigetfile(fullfile(root_dir,'*.*'),'Select One or More Files to Stitch and Downsample','MultiSelect', 'on');
 for i = 1:numel(fname)
     stack_path{i} = fullfile(fpath,fname{i});
 end
 
-%Load stack_info.mat
+%Setup save directory
 data_dir = fullfile(fpath,'..\.'); %Parent of fpath
-if isfile(fullfile(data_dir,'stack_info.mat')) %If file exists
-    stackInfo = load(fullfile(data_dir,'stack_info.mat'));
-else %Extract stack info and convert
+create_dirs(fullfile(data_dir,save_dir)); %Create dirs if non-existent
+save_dir = fullfile(data_dir,save_dir);
+%Get filetype
+[~,~,ext] = fileparts(fname{1});
+
+%Extract image stack information
+if strcmp(ext,'.mat')
+    stackInfo = load(stack_path{i},'tags');
+    for i=1:numel(stack_path)
+        matObj = matfile(stack_path{i});
+        stackInfo.nFrames(i,1) = size(matObj.stack,3);
+    end
+    stackInfo.imageHeight = stackInfo.tags.ImageLength;
+    stackInfo.imageWidth = stackInfo.tags.ImageWidth;
+
+elseif options.save_mat
     %Setup directory structure
-    [ dirs, paths ] = setup_stitchDirs( data_dir, stitch_chan );
+    [ ~, paths ] = setup_stitchDirs( data_dir, options.chan_number );
     % Load raw TIFs and convert to MAT for further processing
     disp('Converting *.TIF files to *.MAT...');
-    info_path = fullfile(data_dir,'stack_info.mat');
-    stackInfo = get_imgInfo(paths.raw, params); %Extract header info from image stack (written by ScanImage)
-    stackInfo.tags = tiff2mat(stack_path, paths.mat, stitch_chan); %Batch convert all TIF stacks to MAT and get info.
+    stackInfo = tiff2mat(stack_path, paths.mat, options); %Batch convert all TIF stacks to MAT and get info.
     stack_path = paths.mat;
     save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
+else %Must have pre-saved stack_info.mat
+    stackInfo = load(fullfile(data_dir,'stack_info.mat'));
 end
 
-%If TIF is specified with Channel Number (eg for stitching raw imaging data)
-[pathname,filename,ext] = fileparts(stack_path{1});
-if stitch_chan && strcmp(ext,'.tif')
-    %Setup directory structure
-    [ ~, paths ] = setup_stitchDirs( data_dir, stitch_chan );
-    tiff2mat(stack_path, paths.mat, stitch_chan); %Batch convert all TIF stacks to MAT and get info.
-    stack_path = paths.mat;
-end
-
-%Save downsampled TIF in 'stitched' folder
-save_dir = fullfile(data_dir,save_dir);
+%Downsample TIF and save in specified folder
 binnedAvg_batch(stack_path,save_dir,stackInfo,bin_width);

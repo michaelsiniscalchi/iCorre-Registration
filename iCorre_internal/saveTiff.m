@@ -1,12 +1,12 @@
-%%saveTiff(img_stack,img_info,save_path)
+%%saveTiff( img_stack, tags, save_path )
 %
 %PURPOSE: Saves imaging stacks from MATLAB arrays to TIF.
 %AUTHOR: MJ Siniscalchi, 180507
-%LAST EDIT: 180718
+%LAST EDIT: 220310
 %
 %INPUT ARGS:
 %   'img_stack': Y x X x Time numeric array representing a stack of image frames
-%   'img_info': A structure containing the tags (e.g., ImageHeight & ImageWidth)
+%   'tags': A structure containing the tags (e.g., ImageHeight & ImageWidth)
 %       to be attached to all frames of the TIF file. If tiff2mat.m was used
 %       to generate MATLAB array, then struct 'stackInfo' will contain all necessary tags.
 %   'save_path': (char) full save path with file name.
@@ -15,37 +15,31 @@
 %   180718mjs   If imfinfo() was used to get img_info, returns 'Height' and 'Width'
 %               instead of valid Tiff tags; added translation of image info into valid tags.
 %
-%--------------------------------------------------------------------------
+%   220310mjs   Simplified to take TIFF tags instead of translating from imfinfo.m output.
+%                   Tiff library works much better and faster...
+%---------------------------------------------------------------------------------------------------
 
-function saveTiff(img_stack,img_info,save_path)
-
-%Get tags from imfinfo() structure or from get_stackInfo.m
-if ~isfield(img_info,'ImageLength') || ~isfield(img_info,'ImageWidth') 
-    img_info.ImageLength = img_info.Height; %imfinfo returns 'Height' and 'Width' instead of valid Tiff tags
-    img_info.ImageWidth  = img_info.Width;
-end
-field_names = fieldnames(img_info);
-field_names = field_names(ismember(field_names,Tiff.getTagNames)); %Trim off fields that are not valid tags
-
-for i=1:numel(field_names)
-    tags.(field_names{i}) = img_info.(field_names{i}); %Assign selected fields to tif tags
-end
-tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-tags.Photometric = Tiff.Photometric.MinIsBlack;
-tags.Software = 'MATLAB';
+function saveTiff( img_stack, tags, save_path )
 
 %Save stack as TIF
-disp(['Saving stack as ' save_path '...']);
+disp(join(['Saving stack as ' save_path '...']));
+
+%Extract and store frame-specific tags
+if isfield(tags,'ImageDescription') && numel(tags.ImageDescription)==size(img_stack,3)
+    ImageDescription = tags.ImageDescription;
+end
+tags = rmfield(tags,'ImageDescription');
+
+%Write TIFF
 t = Tiff(save_path,'w'); %open/create tif for writing
-t.setTag(tags); %tag and write first frame
-t.write(img_stack(:,:,1));
-for j = 2:size(img_stack,3) %create write dir, tag, and write subsequent frames
-    t.writeDirectory();
-    t.setTag(tags);
-    t.write(img_stack(:,:,j));
+for i = 1:size(img_stack,3) %create write dir, tag, and write subsequent frames
+    if i>1
+        t.writeDirectory();
+    end
+    t.setTag(tags); %Frame-invariant tags
+    if exist('ImageDescription','var')
+        t.setTag('ImageDescription',ImageDescription{i});
+    end
+    t.write(img_stack(:,:,i));
 end
 t.close();
-
-end
-
-
