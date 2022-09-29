@@ -70,9 +70,8 @@ for i=1:numel(data_dirs)
         dirs.mat = fullfile(root_dir,data_dirs{i},'mat');
         dirs.save_mat = fullfile(root_dir,data_dirs{i},'registered mat');
         dirs.save_tiff = fullfile(root_dir,data_dirs{i},'registered tiff'); %to save registered stacks as TIFF
+
         % Modify Directory Structure Based on Session Params
-        if params.raw_dir
-        end
         if params.ref_channel && params.reg_channel && params.do_stitch %If two-color co-registration
             dirs.save_ref = fullfile(root_dir,data_dirs{i},'registered_ref_channel'); %Save dir for registered reference channel (for two-color co-registration)
         end
@@ -168,7 +167,6 @@ for i=1:numel(data_dirs)
             disp(' ');
             disp([upper(options_label{m}) ' registration in progress...']);
 
-
             [template,nReps] = ...
                 iCorre(paths.mat,options.(options_label{m}),options_label{m},template,...
                 params.max_err,params.max_reps(m));
@@ -188,8 +186,7 @@ for i=1:numel(data_dirs)
         save(paths.regData,'options','-append');
 
         %% Save registered stacks as TIFF
-        tic;
-
+        applyShiftsTime = tic;
         %Apply registration to second channel if needed
         if params.preserve_chans
             %2-Channel: Apply Shifts and Save Stacks in Original Channel Order
@@ -203,21 +200,24 @@ for i=1:numel(data_dirs)
             %1-Channel: Save Registered Stacks as .TIF
             paths  = applyShifts_multiChannel(paths, dirs, stackInfo, 1, params); %Apply shifts and save .TIF files
         end
+        applyShiftsDuration = toc(applyShiftsTime);
+        disp(['Time spent applying shifts to output channel(s): ' applyShiftsDuration ' s']);
             
         if params.do_stitch
-            if params.ref_channel
-                disp('Getting global downsampled stack (binned avg.) and max projection from registered reference channel...');
-                binnedAvg_batch(paths.mat,dirs.save_ref,stackInfo,params.bin_width); %Save binned avg and projection to ref-channel dir
-            end
+            bin_width = params.bin_width;
             if params.preserve_chans %Binned Avg includes both channels, eg, for use in cropping
                 stackInfo.nFrames = 2*stackInfo.nFrames;
-                params.bin_width = 2*params.bin_width;
+                bin_width = 2*bin_width;
+            elseif params.ref_channel
+                disp('Getting global downsampled stack (binned avg.) and max projection from registered reference channel...');
+                binnedAvg_batch(paths.mat,dirs.save_ref,stackInfo,bin_width); %Save binned avg and projection to ref-channel dir
             end
             disp('Getting global downsampled stack (binned avg.) and max projection of (co-)registered frames...');
-            binnedAvg_batch(paths.save_tiff,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
+            binnedAvg_batch(paths.save_tiff,dirs.main,stackInfo,bin_width); %Save binned avg and projection to main data dir
         end
 
-        run_times.saveTif = toc;
+        run_times.saveTif = toc(applyShiftsTime);
+        disp(['Total time for saving registered data: ' run_times.saveTif ' s']);
         save(paths.regData,'run_times','-append'); %save parameters
 
         %Remove temporary MAT files
