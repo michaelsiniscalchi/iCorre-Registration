@@ -201,7 +201,7 @@ for i=1:numel(data_dirs)
             paths  = applyShifts_multiChannel(paths, dirs, stackInfo, 1, params); %Apply shifts and save .TIF files
         end
         applyShiftsDuration = toc(applyShiftsTime);
-        disp(['Time spent applying shifts to output channel(s): ' applyShiftsDuration ' s']);
+        disp(['Time spent applying shifts to output channel(s): ' num2str(applyShiftsDuration) ' s']);
             
         if params.do_stitch
             bin_width = params.bin_width;
