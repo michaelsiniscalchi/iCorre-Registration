@@ -66,7 +66,7 @@ if exist(path_settings,'file')
     settings = s.settings;
 elseif ~inputBox_TF
     warning(['No settings found at ' path_settings]);
-    disp(['Saving default settings as ' path_settings]);
+    disp(['Saving settings as ' path_settings]);
 end
 
 if inputBox_TF
@@ -120,8 +120,10 @@ end
 params.read_method = 'TiffLib'; %'imread','TiffLib','scim'
 
 %Save params as struct
-save(path_settings,'settings'); %String array
-save(path_settings,'-struct','params','-append'); %Structure
+if inputBox_TF %If interactive
+    save(path_settings,'settings'); %String array
+    save(path_settings,'-struct','params','-append'); %Structure
+end
 
 %Additional Outputs for iCorre_batch()
 root_dir        = params.root_dir;

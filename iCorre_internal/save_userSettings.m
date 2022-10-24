@@ -32,5 +32,5 @@ clearvars;
 
 %% Get user input to set Hyperparameters
 % path_settings = fullfile(pwd,'user_settings.mat'); %Default user settings file; edit to specify eg a path within your data directory hierarchy
-path_settings = 'W:\iCorre-test\Data\user_settings.mat';
+path_settings = 'X:\michael\vta1\_suite2p\settings_nrmc.mat';
 [root_dir, search_filter, params] = getUserSettings(path_settings);
