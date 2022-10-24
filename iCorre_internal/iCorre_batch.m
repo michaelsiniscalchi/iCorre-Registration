@@ -217,7 +217,7 @@ for i=1:numel(data_dirs)
         end
 
         run_times.saveTif = toc(applyShiftsTime);
-        disp(['Total time for saving registered data: ' run_times.saveTif ' s']);
+        disp(['Total time for saving registered data: ' num2str(run_times.saveTif) ' s']);
         save(paths.regData,'run_times','-append'); %save parameters
 
         %Remove temporary MAT files
