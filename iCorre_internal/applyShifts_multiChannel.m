@@ -47,23 +47,25 @@ for i = 1:numel(paths.mat)
     %Load tiff and registration params
     stack = loadtiffseq(paths.raw{i}, params.read_method); % load raw stack (.tif)
     S = load(paths.mat{i},'options','sum_shifts');
+    
     %Crop if specified
     if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
         stack = cropStack(stack, stackInfo.margins);
     end
-    
-    %Get single channels out of interleaved frames
-    for j = 1:numel(chan_ID)
-        chan_out{j} = stack(:,:,chan_ID(j):num_chans:end); %Specified channel: 1, 2, or [1,2]
-    end
+       
     %Apply shifts to master and/or follower channels
-    nIFDs = size(stack,3)*(numel(chan_ID)/num_chans); %Image File Directories for TIFF format
-    stack = zeros(size(stack,1),size(stack,2),nIFDs,"like",stack); %Initialize output stack
-    for j = 1:numel(chan_out)
-        for k = 1:numel(regParams)
-            stack(:,:,j:numel(chan_out):end) =...
-                apply_shifts(chan_out{j},S.sum_shifts.(regParams{k}),...
+    for j = 1:numel(chan_ID)
+        chan_out = stack(:,:,chan_ID(j):num_chans:end); %extract specified channel: 1, 2, or [1,2]
+        for k = 1:numel(regParams) %for each round of registration (seed, RMC, NRMC)
+            chan_out =...
+                apply_shifts(chan_out,S.sum_shifts.(regParams{k}),...
                 S.options.(regParams{k})); %apply shifts: apply_shifts(stack,shifts,options)
+        end
+        %Overwrite channel or reduce to one output channel
+        if numel(chan_ID)>1 
+            stack(:,:,chan_ID(j):num_chans:end) = chan_out; %preserve interleaved channels
+        else
+            stack = chan_out; %single channel out
         end
     end
 

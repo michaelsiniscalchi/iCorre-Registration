@@ -168,8 +168,8 @@ for i=1:numel(data_dirs)
             disp([upper(options_label{m}) ' registration in progress...']);
 
             [template,nReps] = ...
-                iCorre(paths.mat,options.(options_label{m}),options_label{m},template,...
-                params.max_err,params.max_reps(m));
+                iCorre(paths.mat, options.(options_label{m}), options_label{m}, template,...
+                params.max_err, params.max_reps(m));
 
             template_out.(options_label{m}) = template;
             nRepeats.(options_label{m}) = nReps;
@@ -190,6 +190,7 @@ for i=1:numel(data_dirs)
         %Apply registration to second channel if needed
         if params.preserve_chans
             %2-Channel: Apply Shifts and Save Stacks in Original Channel Order
+            %paths = applyShifts_multiChannel(paths, dirs, stackInfo, chan_ID, params)
             paths = applyShifts_multiChannel(...
                 paths, dirs, stackInfo, [1,2], params); %Apply shifts and save .TIF files
         elseif params.ref_channel %set to 0 for 1-channel imaging

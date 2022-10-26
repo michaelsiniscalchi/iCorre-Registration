@@ -2,22 +2,25 @@
 function paths = applyShifts_multiChannel(paths, dirs, stackInfo, chan_ID, params)
 
 % Check Inputs
-if ~exist("chan_ID","var") || isempty(chan_ID)%Default to one-channel
+if ~exist("chan_ID","var") || isempty(chan_ID) %Default to one-channel
     num_chans = 1;
     chan_ID = 1;
 end
+
 if ~exist("params","var") %Default Params
     fileType_save = "tiff"; %Default: save to TIFF
     num_chans = chan_ID; %Infer multi-channel if chan_ID>1
     %Check if filetype for save is TIFF or MAT
-elseif ~all(strcmp(params.fileType_save,["tiff","mat"]))
+else
+    num_chans = 1 + logical(params.ref_channel); %'ref_channel' and 'reg_channel' set to 0 for 1-color imaging
+    fileType_save = params.fileType_save; 
+end
+
+if ~all(ismember(fileType_save,["tiff","mat"]))
     fileType_save = "tiff"; %Default: save to TIFF
     warning('applyShifts_batch.m');
     warning('options.fileType_save must be a string vector containing one or both the following: "tiff" or "mat".');
     warning('Saving stack as TIFF.');
-else
-    num_chans = 1 + logical(params.ref_channel); %'ref_channel' and 'reg_channel' set to 0 for 1-color imaging
-    fileType_save = params.fileType_save; 
 end
 
 %Console display
@@ -42,8 +45,9 @@ for i = 1:numel(paths.mat)
     waitbar(temp,h,msg);
 
     %Load tiff and registration params
-    stack = loadtiffseq(paths.raw{i}); % load raw stack (.tif)
+    stack = loadtiffseq(paths.raw{i}, params.read_method); % load raw stack (.tif)
     S = load(paths.mat{i},'options','sum_shifts');
+    
     %Crop if specified
     if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
         stack = cropStack(stack, stackInfo.margins);
@@ -51,18 +55,27 @@ for i = 1:numel(paths.mat)
     
     %Get single channels out of interleaved frames
     for j = 1:numel(chan_ID)
-        chan_out{j} = stack(:,:,chan_ID(j):num_chans:end); %Specified channel: 1, 2, or [1,2]
+        
     end
+    
     %Apply shifts to master and/or follower channels
-    nIFDs = size(stack,3)*(numel(chan_ID)/num_chans); %Image File Directories for TIFF format
-    stack = zeros(size(stack,1),size(stack,2),nIFDs); %Initialize output stack
-    for j = 1:numel(chan_out)
-        for k = 1:numel(regParams)
-            stack(:,:,j:numel(chan_out):end) =...
-                apply_shifts(chan_out{j},S.sum_shifts.(regParams{k}),...
+    for j = 1:numel(chan_ID)
+        chan_out = stack(:,:,chan_ID(j):num_chans:end); %Specified channel: 1, 2, or [1,2]
+        for k = 1:numel(regParams) %For each round of registration (seed, RMC, NRMC)
+            chan_out =...
+                apply_shifts(chan_out,S.sum_shifts.(regParams{k}),...
                 S.options.(regParams{k})); %apply shifts: apply_shifts(stack,shifts,options)
         end
+        
+        if numel(chan_ID)>1 %If preserving interleaved channels
+            stack(:,:,chan_ID(j):num_chans:end) = chan_out;
+        else
+            stack = chan_out; 
+        end
     end
+    
+    nIFDs = size(stack,3)*(numel(chan_ID)/num_chans); %Image File Directories for TIFF format
+    stack = zeros(size(stack,1),size(stack,2),nIFDs,"like",stack); %Initialize output stack
 
     %Save registered stack
     [~,source,~] = fileparts(paths.raw{i});
@@ -74,9 +87,11 @@ for i = 1:numel(paths.mat)
     end
     if any(strcmp(fileType_save,"tiff")) %Save as TIFF
         save_path_tiff(i) = fullfile(dirs.save_tiff,strcat(regParams{end},'_',source,'.tif'));
+        tags = stackInfo.tags;
         if numel(chan_ID)>1 %2-Channels for Save
             tags.ImageDescription = cell(nIFDs,1);
-            tags.ImageDescription(1:2:end) = deal(stackInfo.tags.ImageDescription);
+            [tags.ImageDescription(1:2:end), tags.ImageDescription(2:2:end)] =...
+                deal(stackInfo.tags.ImageDescription{i});
         else
             tags = stackInfo.tags;
         end
