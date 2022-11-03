@@ -40,10 +40,8 @@ for i = 1:numel(paths.mat)
     waitbar(temp,h,msg);
 
     %Load tiff and get channel for co-registration
-    stack = loadtiffseq(paths.raw{i}); % load raw stack (.tif)
-    if ~isempty(chan_number) %Check for correction based on structural channel
-        stack = stack(:,:,chan_number:2:end); %Get single channel out of interleaved frames
-    end
+    stack = loadtiffseq(paths.raw{i}, chan_number); % load raw stack (.tif)
+    
     %Crop if necessary
     if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
         stack = cropStack(stack, stackInfo.margins);

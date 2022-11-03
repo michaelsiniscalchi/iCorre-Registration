@@ -40,14 +40,9 @@ parfor i = 1:numel(tif_paths)
     source = [filename ext]; 
     disp(['Converting [parallel] ' source '...']);
     
-        % Load Stack and Extract TIFF tags 
-    [stack, tags] =  loadtiffseq(tif_paths{i},options.read_method); % load raw stack (.tif)
-
-    %Check for correction based on structural channel
-    if options.chan_number 
-            stack = stack(:,:,options.chan_number:2:end); %Convert data from specified (eg reference) channel
-            tags.ImageDescription = tags.ImageDescription(options.chan_number:2:end); %Remove superfluous image descriptions
-    end
+    % Load Stack and Extract TIFF tags
+    [stack, tags] =  loadtiffseq(...
+        tif_paths{i},options.chan_number,options.read_method); % load raw stack (.tif)
     ImageDescription{i} = tags.ImageDescription;
     
     %Crop images if specified

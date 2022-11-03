@@ -1,7 +1,14 @@
 
-function [ stack, tags ] = loadtiffseq( full_path, method )
+function [ stack, tags ] = loadtiffseq( full_path, channel, method )
 
-if nargin<2
+if nargin<2 || isempty(channel)
+    channel = 1; %If empty, load all frames
+    nChans = 1; %Load all frames as if 1-channel
+else
+    nChans = 2; %2-channels; load only the specified channel
+end
+
+if nargin<3
     method = 'TiffLib'; %Default; slower than ScanImageTiffReader, but does not require OS-specific MEX files
 end
 
@@ -38,11 +45,12 @@ switch method
             t.nextDirectory;
         end
         nFrames = t.currentDirectory;
-        stack = zeros(tags.ImageLength, tags.ImageWidth, nFrames,'int16');
+        stack = zeros(tags.ImageLength, tags.ImageWidth, nFrames/nChans,'int16');
 
         %Read frames
-        for i = 1:nFrames
-            t.setDirectory(i);
+        IFD = channel:nChans:nFrames; %Image File Dir (page) within TIFF
+        for i = 1:size(stack,3)
+            t.setDirectory(IFD(i));
             stack(:,:,i) = t.read();
             if get_descriptions %Frame-specific tags: I2C data, etc.
                 tags.ImageDescription{i,1} =  t.getTag("ImageDescription");

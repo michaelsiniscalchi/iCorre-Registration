@@ -1,9 +1,14 @@
 function meanProject_batch( root_dir, search_filter, chan_num )
 
-% Get list of data directories
+% Check inputs
 if nargin<2 || ~exist("search_filter","var")
     search_filter = '';
 end
+if ~exist('chan_num', 'var') 
+    chan_num=[];
+end
+
+% Get list of data directories
 data_dir = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
 data_dir = {data_dir.name};
 mask = ~(strcmp(data_dir,'.') | strcmp(data_dir,'..') | isfile(fullfile(root_dir,data_dir)));
@@ -31,13 +36,10 @@ for i = 1:numel(data_dir)
     stacks = dir(raw_dir);
     stacks = stacks(isfile(fullfile(raw_dir,{stacks.name})));
     %Parallel load and take mean and max projections
-    [~, tags] = loadtiffseq(fullfile(raw_dir,stacks(1).name)); %Get frame-invariant tags from first stack
+    [~, tags] = loadtiffseq(fullfile(raw_dir,stacks(1).name),1); %Get frame-invariant tags from first stack
     stackMean = nan(tags.ImageLength,tags.ImageWidth,numel(stacks)); %Initialize
     for j = 1:numel(stacks)
-        stack = loadtiffseq(fullfile(raw_dir,stacks(j).name));
-        if exist('chan_num', 'var')
-            stack = stack(:,:,chan_num:2:end);
-        end
+        stack = loadtiffseq(fullfile(raw_dir,stacks(j).name), chan_num);
         stackMean(:,:,j) = mean(stack,3,'omitnan');
         stackMax(:,:,j) = max(stack,[],3,'omitnan');
     end
