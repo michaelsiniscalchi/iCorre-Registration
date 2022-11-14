@@ -68,12 +68,12 @@ for i = 1:numel(data_dirs)
         tic;
         disp('Calculating motion correction quality metrics...');
         %Calculate
-        [R, crispness, meanProj] = mvtCorrMetrics(data_dirs{i}, params.reg_channel);
+        [R, crispness, meanProj] = mvtCorrMetrics(fullfile(root_dir,data_dirs{i}), params.reg_channel);
         %Save results, figure, and mean projection
         [~,session_ID,~] = fileparts(dirs.main);
-        save(fullfile(data_dirs{i},"reg_info.mat"), "R", "crispness", "meanProj","-append");
+        save(fullfile(fullfile(root_dir,data_dirs{i}),"reg_info.mat"), "R", "crispness", "meanProj","-append");
         save_multiplePlots(...
-            fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), data_dirs{i});
+            fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), fullfile(root_dir,data_dirs{i}));
         saveTiff(meanProj, stackInfo.tags, fullfile(...
             save_dir,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
         %Save run time
