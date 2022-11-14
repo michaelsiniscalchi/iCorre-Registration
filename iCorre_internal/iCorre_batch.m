@@ -221,9 +221,14 @@ for i=1:numel(data_dirs)
         disp(['Total time for saving registered data: ' num2str(run_times.saveTif) ' s']);
         save(paths.regData,'run_times','-append'); %save parameters
 
+        %disp('Calculating motion correction quality metrics...');
+        %tic; ... run_times.motionCorrMetrics = toc;
+        %disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
+        %save(paths.regData,'run_times','-append'); %save correction metrics and runtime
+
         %Remove temporary MAT files
         if params.delete_mat
-            rmdir(dirs.mat,'s'); %DELETE .MAT dir...
+            %rmdir(dirs.mat,'s'); %DELETE .MAT dir...
         end
 
         clearvars '-except' root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;

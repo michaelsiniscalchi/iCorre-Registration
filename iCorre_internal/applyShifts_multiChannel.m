@@ -53,12 +53,12 @@ for i = 1:numel(paths.mat)
     stack = loadtiffseq(paths.raw{i}, chan, params.read_method); % load raw stack (.tif)
     S = load(paths.mat{i},'options','sum_shifts');
     
-    %Crop if specified
+    % Crop if specified
     if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
         stack = cropStack(stack, stackInfo.margins);
     end
        
-    %Apply shifts to master and/or follower channels
+    % Apply shifts to master and/or follower channels
     for j = 1:numel(chan_ID)
         %Isolate specified channel
         if numel(chan_ID)>1 
@@ -82,19 +82,23 @@ for i = 1:numel(paths.mat)
         end
     end
 
-    %Save registered stack
+    % Save Registered Stack
     [~,source,~] = fileparts(paths.raw{i});
-    if any(strcmp(fileType_save,"mat")) %Save as MAT
+    
+    %Save as MAT
+    if any(strcmp(fileType_save,"mat")) 
         save_path_mat(i) = fullfile(dirs.save_mat,strcat(regParams{end},'_',source,'.mat'));
         options = S.options;
         disp(join(['Saving stack and registration info as ' save_path_mat(i) '...']));
         save(fullfile(save_path_mat(i)),'stack','options','source'); %saveTiff(stack,img_info,save_path))
     end
+
+    %Save as TIFF
     if any(strcmp(fileType_save,"tiff")) %Save as TIFF
         save_path_tiff(i) = fullfile(dirs.save_tiff,strcat(regParams{end},'_',source,'.tif'));
         tags = stackInfo.tags;
         if numel(chan_ID)>1 %2-Channels for Save
-            tags.ImageDescription = cell(nIFDs,1);
+            tags.ImageDescription = cell(size(stack,3),1);
             [tags.ImageDescription(1:2:end), tags.ImageDescription(2:2:end)] =...
                 deal(stackInfo.tags.ImageDescription{i});
         else

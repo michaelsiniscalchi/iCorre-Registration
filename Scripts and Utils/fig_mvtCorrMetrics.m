@@ -1,6 +1,6 @@
 function fig = fig_mvtCorrMetrics(session_ID, R, crispness, mean_projection)
 
-fig = figure('Name',[session_ID, '_movement correction metrics'],...
+fig(1) = figure('Name',[session_ID, '_movement correction metrics'],...
     'Units','normalized','Position',[0.1,0.1,0.5,0.8]);
 
 nCols = numel(fieldnames(mean_projection))*5;
