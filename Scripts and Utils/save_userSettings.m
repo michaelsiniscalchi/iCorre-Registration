@@ -32,5 +32,5 @@ clearvars;
 
 %% Get user input to set Hyperparameters
 % path_settings = fullfile(pwd,'user_settings.mat'); %Default user settings file; edit to specify eg a path within your data directory hierarchy
-path_settings = 'V:\mjs20\seed\user_settings.mat';
+path_settings = 'V:\mjs20\nrmc\test\user_settings.mat';
 [ params, root_dir, search_filter ] = getUserSettings(path_settings);

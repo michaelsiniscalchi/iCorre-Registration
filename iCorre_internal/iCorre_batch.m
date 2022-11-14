@@ -203,7 +203,7 @@ for i=1:numel(data_dirs)
         end
         applyShiftsDuration = toc(applyShiftsTime);
         disp(['Time spent applying shifts to output channel(s): ' num2str(applyShiftsDuration) ' s']);
-            
+
         if params.do_stitch
             bin_width = params.bin_width;
             if params.preserve_chans %Binned Avg includes both channels, eg, for use in cropping
@@ -221,15 +221,33 @@ for i=1:numel(data_dirs)
         disp(['Total time for saving registered data: ' num2str(run_times.saveTif) ' s']);
         save(paths.regData,'run_times','-append'); %save parameters
 
-        %disp('Calculating motion correction quality metrics...');
-        %tic; ... run_times.motionCorrMetrics = toc;
-        %disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
-        %save(paths.regData,'run_times','-append'); %save correction metrics and runtime
+        % --- Movement Correction Metrics ---
+        tic;
+        disp('Calculating motion correction quality metrics...');
+        %Calculate
+        [R, crispness, meanProj] = mvtCorrMetrics(data_dirs{i}, params.reg_channel);
+        %Save results, figure, and mean projection
+        [~,session_ID,~] = fileparts(dirs.main);
+        save(fullfile(data_dirs{i},"reg_info.mat"), "R", "crispness", "meanProj","-append");
+        save_multiplePlots(...
+            fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), data_dirs{i});
+        saveTiff(meanProj, stackInfo.tags, fullfile(...
+            save_dir,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
+        %Save run time
+        run_times.motionCorrMetrics = toc;
+        disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
+        save(paths.regData,'run_times','-append'); %save correction metrics and runtime
 
-        %Remove temporary MAT files
+
+        %% Remove stacks from saved MAT files
         if params.delete_mat
-            %rmdir(dirs.mat,'s'); %DELETE .MAT dir...
+            removeStackData_par(paths.mat);
         end
+        
+        %Remove temporary MAT files
+%         if params.delete_mat
+%             rmdir(dirs.mat,'s'); %DELETE .MAT dir...
+%         end
 
         clearvars '-except' root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;
 

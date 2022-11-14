@@ -23,10 +23,10 @@ if isempty(gcp('nocreate'))
 end
 
 %% Loop through all matching data directories
-for i=1:numel(data_dirs)
+for i = 1:numel(data_dirs)
     try
         %Load imaging and registration info
-        [dirs, paths, stackInfo, params] = getRegData(data_dirs{i});
+        [dirs, paths, stackInfo, params] = getRegData(fullfile(root_dir,data_dirs{i}));
 
         % --- Apply registration to follower and/or reference channel as needed ---
         applyShiftsTime = tic;
