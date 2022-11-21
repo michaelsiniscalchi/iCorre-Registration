@@ -34,8 +34,8 @@ if nargin<2 || ~exist("search_filter","var")
 end
 temp = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
 data_dirs = {temp.name};
-temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(fullfile(root_dir,data_dirs)));
-data_dirs = data_dirs(temp); %remove '.', '..', and any files from directory list
+temp = ~(ismember(data_dirs,{'.','..'})) & ~isfile(fullfile(root_dir,data_dirs)) & strcmp({temp(:).folder},root_dir);
+data_dirs = data_dirs(temp); %remove '.', '..', subdirs, and any files from directory list
 disp('Directories for movement correction:');
 disp(data_dirs');
 clearvars temp;
