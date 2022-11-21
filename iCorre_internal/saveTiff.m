@@ -25,10 +25,12 @@ function saveTiff( img_stack, tags, save_path )
 disp(join(['Saving stack as ' save_path '...']));
 
 %Extract and store frame-specific tags
-if isfield(tags,'ImageDescription') && numel(tags.ImageDescription)==size(img_stack,3)
-    ImageDescription = tags.ImageDescription;
+if isfield(tags,'ImageDescription') 
+    if numel(tags.ImageDescription)==size(img_stack,3)
+        ImageDescription = tags.ImageDescription;
+    end
+    tags = rmfield(tags,'ImageDescription');
 end
-tags = rmfield(tags,'ImageDescription');
 
 %Write TIFF
 t = Tiff(save_path,'w'); %open/create tif for writing

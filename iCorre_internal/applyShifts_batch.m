@@ -1,76 +1,114 @@
-% function [ save_path_tiff, save_path_mat ] = applyShifts_batch(path_names, save_dir, stackInfo, chan_number, fileType_save)
-function paths = applyShifts_batch(paths, dirs, stackInfo, chan_number, options)
+function paths = applyShifts_batch(paths, dirs, stackInfo, params)
 
 % Check Inputs
-if nargin < 5 %Default options
-    fileType_save = "tiff"; %Default: save to TIFF
-end
-if nargin < 4
-    chan_number = [];
-end
-%Check if filetype for save is TIFF or MAT
-if ~all(strcmp(options.fileType_save,["tiff","mat"]))
-    fileType_save = "tiff"; %Default: save to TIFF
-    warning('applyShifts_batch.m');
-    warning('options.fileType_save must be a string vector containing one or both the following: "tiff" or "mat".');
-    warning('Saving stack as TIFF.');
-else
-    fileType_save = options.fileType_save; 
-end
-
-%Console display
-disp('Applying shifts to follower channel...');
 S = load(paths.mat{1},'options');
-regParams = fieldnames(S.options);
-disp('Hyperparameter sets:');
-disp(regParams);
+reg_params = fieldnames(S.options);
 
-%Progress bar
-h = waitbar(0,'Applying shifts...','Name','Progress');
+%Extract channel IDs to register
+if params.save_ref || params.preserve_chans
+    %Register both channels
+    chan = [];
+    chan_ID = [1,2];
+elseif params.ref_channel
+    %Register only the follower channel
+    [chan, chan_ID] = deal(params.reg_channel);
+else
+    %Single-channel imaging
+    chan = [];
+    chan_ID = 1;
+end
 
-%Initialize output var
-[save_path_tiff, save_path_mat] = deal(strings(numel(paths.mat),1)); 
+%Create save directories
+[~,fnames,~] = fileparts(paths.raw);
+prefix = repmat(reg_params(end),numel(fnames),1);
+if params.save_interleaved
+    dirs.save_tiff = fullfile(dirs.main,'registered-interleaved');
+else
+    for i = 1:numel(chan_ID)
+        dirs.save_tiff{i} = fullfile(dirs.main,['registered-chan' num2str(chan_ID(i))]);
+    end
+end
+
+%Save paths
+for i = 1:numel(dirs.save_tiff)
+    path_save{i} = fullfile(dirs.save_tiff{i}, join([prefix,fnames],'_')); %#ok<AGROW> 
+end
+path_save = horzcat(path_save{:});
+
+%Unpack variables for parallel processing
+path_source = paths.source;
+mat_path = paths.mat;
+crop_margins = params.crop_margins;
+save_interleaved = params.save_interleaved;
+tags = rmfield(stackInfo.tags,'ImageDescription'); %ImageDescription not needed; save memory!
 
 %Loop through registration transforms for each substack
-for i = 1:numel(paths.mat)
-
-    %Update progress bar
-    temp = (i-1)/numel(paths.mat);
-    msg = ['Applying shifts...  (' num2str(temp*100,2) '%)'];
-    waitbar(temp,h,msg);
-
-    %Load tiff and get channel for co-registration
-    stack = loadtiffseq(paths.raw{i}, chan_number); % load raw stack (.tif)
-    
-    %Crop if necessary
-    if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
-        stack = cropStack(stack, stackInfo.margins);
-    end
-
-    %Load .MAT file and apply shifts from master registration
-    S = load(paths.mat{i},'options','sum_shifts');
-    for j = 1:numel(regParams)
-        stack = apply_shifts(stack,S.sum_shifts.(regParams{j}),S.options.(regParams{j})); %apply shifts: apply_shifts(stack,shifts,options)
-    end
-
-    %Save registered stack
-    [~,source,~] = fileparts(paths.raw{i});
-    if any(strcmp(fileType_save,"mat")) %Save as MAT
-        save_path_mat(i) = fullfile(dirs.save_mat,strcat(regParams{end},'_',source,'.mat'));
-        options = S.options;
-        disp(join(['Saving stack and registration info as ' save_path_mat(i) '...']));
-        save(fullfile(save_path_mat(i)),'stack','options','source'); %saveTiff(stack,img_info,save_path))
-    end
-    if any(strcmp(fileType_save,"tiff")) %Save as TIFF
-        save_path_tiff(i) = fullfile(dirs.save_tiff,strcat(regParams{end},'_',source,'.tif'));
-        saveTiff(stack,stackInfo.tags,fullfile(save_path_tiff(i))); %saveTiff(stack,img_info,save_path))
-    end
-
+parfor i = 1:numel(path_source)
+iCorreApplyShifts(path_source{i}, mat_path{i}, path_save(i,:), reg_params, chan_ID, crop_margins, save_interleaved, tags);
 end
 
-paths.save_tiff = save_path_tiff;
-paths.save_mat = save_path_mat;
+% %         disp(['Applying shifts to channel ' num2str(P.chan_ID(j)) '...']);
+% %         disp('Hyperparameter sets:');
+% %         disp(regParams);    
+% 
+%     stack = loadtiffseq(paths.source{i}, chan, params.read_method); % load raw stack (.tif) as cell
+%     S = load(paths.mat{i},'options','sum_shifts');
+% 
+%     % Crop if specified
+%     if isfield(stackInfo,'margins') && ~isempty(stackInfo.margins)
+%         stack = cropStack(stack, stackInfo.margins);
+%     end
+% 
+%     % Apply shifts to master and/or follower channels
+%     for j = 1:numel(chan_ID)
+%         disp(['Applying shifts to channel ' num2str(chan_ID(j)) '...']);
+%         disp('Hyperparameter sets:');
+%         disp(regParams);
+% 
+%         %Apply shifts from each round of registration (seed, RMC, NRMC)
+%         chan_out = stack(:,:,j:numel(chan_ID):end); %Isolate specified channel if interleaved
+%         for k = 1:numel(regParams)
+%             chan_out =...
+%                 apply_shifts(chan_out,S.sum_shifts.(regParams{k}),...
+%                 S.options.(regParams{k})); %apply shifts: apply_shifts(stack,shifts,options)
+%         end
+% 
+%         %Overwrite channel
+%         stack(:,:,j:numel(chan_ID):end) = chan_out; %preserve interleaved channels
+%     end
+%     clearvars chan_out
+% 
+%     %Split channels if necessary
+%     if numel(chan_ID)>1 && ~params.preserve_chans
+%         stack_out{1} = stack(:,:,1:2:end);
+%         stack_out{2} = stack(:,:,2:2:end);
+%     else
+%         stack_out = {stack};
+%     end
+%     clearvars stack
+% 
+%     % Save Registered Stack(s)
+%     [~,source,~] = fileparts(paths.raw{i});
+% 
+%     for j = 1:numel(stack_out)
+%         %Save as TIFF
+%         stack = stack_out{j};
+%         if any(strcmp(params.fileType_save,"tiff")) %Save as TIFF
+%             save_path_tiff{j}(i) = ...
+%                 fullfile(dirs.save_tiff{j},strcat(regParams{end},'_',source,'.tif'));
+%             tags = stackInfo.tags;
+%             if params.preserve_chans %Save interleaved
+%                 tags.ImageDescription = cell(size(stack,3),1);
+%                 [tags.ImageDescription(1:2:end), tags.ImageDescription(2:2:end)] =...
+%                     deal(stackInfo.tags.ImageDescription{i});
+%             else
+%                 tags = stackInfo.tags;
+%             end
+%             saveTiff(stack,tags,fullfile(save_path_tiff{j}(i))); %saveTiff(stack,img_info,save_path))
+%         end
+%     end
 
-close(h); %Close waitbar
-% warning(w); %Revert warning state
-
+end
+% 
+% paths.save_tiff = save_path_tiff;
+% paths.save_mat = save_path_mat;

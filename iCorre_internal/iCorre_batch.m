@@ -19,6 +19,11 @@
 %       registration, throwing this error: 'MATLAB:save:permissionDenied'
 %       If problem persists, try checking attributes and pausing
 %       before save...
+%
+%   **TO DO:
+%       -- assign separate dirs.save_reg, dirs.save_ref, dirs.save_interleaved (registered-chan1, registered-chan0, registered-interleaved, etc.)
+%       -- bypass seed if operating on 'registered-interleaved' dir, to allow post-hoc reconstruction of all steps (edit applyShifts functions)
+%       -- save all stitched tiffs in main, with channel number and final reg step in fname
 %-----------------------------------------------------------------------------------------------------------
 
 function [ status, err_msg ] = iCorre_batch(root_dir,search_filter,params)
@@ -33,6 +38,7 @@ temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..') | isfile(fullfile(root_d
 data_dirs = data_dirs(temp); %remove '.', '..', and any files from directory list
 disp('Directories for movement correction:');
 disp(data_dirs');
+clearvars temp;
 
 %% Setup parallel pool for faster processing
 if isempty(gcp('nocreate'))
@@ -64,70 +70,54 @@ for i=1:numel(data_dirs)
         disp(['*** Hyperparameters for ' data_dirs{i} ' ***']);
         disp(params);
 
-        % Define & Create Subdirectories
-        dirs.main = fullfile(root_dir,data_dirs{i});
-        dirs.raw = fullfile(root_dir,data_dirs{i},params.raw_dir); %Default is 'raw', but can be changed to allow for seed/rigid registration->cropping->registration
-        dirs.mat = fullfile(root_dir,data_dirs{i},'mat');
-        dirs.save_mat = fullfile(root_dir,data_dirs{i},'registered mat');
-        dirs.save_tiff = fullfile(root_dir,data_dirs{i},'registered tiff'); %to save registered stacks as TIFF
+        % Setup Subdirectories and File Paths
+        [dirs, paths] = iCorreFilePaths(root_dir, data_dirs{i}, params.source_dir);
 
-        % Modify Directory Structure Based on Session Params
-        if params.ref_channel && params.reg_channel && params.do_stitch %If two-color co-registration
-            dirs.save_ref = fullfile(root_dir,data_dirs{i},'registered_ref_channel'); %Save dir for registered reference channel (for two-color co-registration)
-        end
-
-        % If No 'raw' Directory, Create It & Move the TIF Files There
+        %If No 'raw' Directory, Create It & Move the TIF Files There
         if ~exist(dirs.raw,'dir')
             mkdir(dirs.raw);
-            movefile(fullfile(dirs.main,'*.tif'),dirs.raw);
+            movefile(fullfile(dirs.main,'*.tif'), dirs.raw);
         end
 
-        % Delete any existing MAT directory
+        %Remove any existing MAT directory
         if exist(dirs.mat,'dir')
-            rmdir(dirs.mat,'s'); %MAT files for saving registration-in-progress
+            if strcmp(dirs.source, dirs.raw) %If temp MAT files exist and input data are raw (unregistered)
+                rmdir(dirs.mat,'s'); %Start over from scratch
+            else %Move prior MAT files
+                movefile(dirs.mat,fullfile(dirs.source,['mat' datestr(now,'yymmddHHMM')]));
+                if exist(paths.regData,'file') %Also move registration data
+                    movefile(paths.regData, fullfile(dirs.source,['reg_info' datestr(now,'yymmddHHMM') '.mat']));
+                end
+            end
         end
-
-        % Create remaining directories
-        field_names = fieldnames(dirs);
-        for j=1:numel(field_names)
-            create_dirs(dirs.(field_names{j}));
-        end
-
-        % Define All Filepaths Based on Data Filename
-        files = dir(fullfile(dirs.raw,'*.tif'));
-        for j=1:numel(files)
-            paths.raw{j} = fullfile(dirs.raw,files(j).name); %Raw TIFFs for registration
-            paths.mat{j} = fullfile(dirs.mat,[files(j).name(1:end-4) '.mat']); %MAT file (working file for read/write across iterations)
-        end
-
-        % Additional Paths for Metadata
-        paths.regData = fullfile(root_dir,data_dirs{i},'reg_info.mat'); %Matfile containing registration data
-        paths.stackInfo = fullfile(root_dir,data_dirs{i},'stack_info.mat'); %Matfile containing image header info and tag struct for writing to TIF
+        %Make MAT directory
+        create_dirs(dirs.mat);
 
         %Display Paths
-        disp(['Data directory: ' dirs.raw]);
+        disp(['Data directory: ' dirs.source]);
         disp({['Path for stacks as *.mat files: ' dirs.mat];...
             ['Path for info file: ' paths.regData]});
-
-        clearvars temp;
 
         %% Load raw TIFs and convert to MAT for further processing
         disp('Converting *.TIF files to *.MAT for movement correction...');
 
-        stackInfo = tiff2mat_parallel(paths.raw, paths.mat,...
+        stackInfo = tiff2mat_parallel(paths.source, paths.mat,...
             struct(...
             'chan_number',params.ref_channel,...
             'crop_margins',params.crop_margins,...
             'read_method',params.read_method,...
             'extract_I2C',params.saveI2CData)); %Batch convert all TIF stacks to MAT and get info.
-
-        save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
+        if ~exist(paths.stackInfo,"file")
+            save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
+        else
+            save(paths.stackInfo,'-STRUCT','stackInfo','-append');
+        end
 
         %% Correct RIGID, then NON-RIGID movement artifacts iteratively
         % Set parameters
         RMC_shift = round(0.5*params.max_shift); %Params value used for SEED (based on reference image); therefter, narrow the degrees freedom
-        NRMC_shift = round(0.5*params.max_shift); %[10,10,0]; max dev = [5,5,0] for 256x256
-        overlap = round(params.grid_size/4); %[16,16] for 256x256
+        NRMC_shift = round(0.5*params.max_shift); %[10,10]; max dev = [8,8] for 512x512
+        overlap = round(params.grid_size/4); %[32,32] for 512x512
 
         options.seed = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,...
             'max_shift',params.max_shift,'shifts_method','FFT',...
@@ -147,20 +137,20 @@ for i=1:numel(data_dirs)
             'boundary','NaN','upd_template',false,...
             'use_parallel',true,'print_msg',false);
 
-        %--- Notes on NoRMCorreSetParms ---
-        %'use_windowing' not supported when providing a template image.
-        %----------------------------------
+        % Bypass SEED registration if working with pre-registered stack
+        if ~strcmp(dirs.source, dirs.raw)
+            params.max_reps(1) = 0;
+        end
 
         %Check params
         params.imageSize = [stackInfo.imageHeight, stackInfo.imageWidth];
-        params = iCorreCheckParams(params);
+        params = iCorreCheckParams(params); %**under devo** Currently checks grid_size against image size
 
-        % Initialize .mat file
+        % Generate SEED Template and Initialize MAT file
+        template = getRefImg(paths.mat,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
         save(paths.regData,'params','-v7.3'); %so that later saves in the loop can use -append
 
         % Iterative movement correction
-        template = getRefImg(paths.mat,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
-
         options_label = fieldnames(options);
         for m = find(params.max_reps) %seed, rigid, non-rigid
             tic;
@@ -177,7 +167,6 @@ for i=1:numel(data_dirs)
 
             disp([options_label{m} ' correction complete. Elapsed Time: ' num2str(run_times.(options_label{m})) 's']);
             save(paths.regData,'template_out','nRepeats','run_times','-append'); %save values
-
         end
 
         %Update regInfo and save
@@ -185,69 +174,47 @@ for i=1:numel(data_dirs)
         options = rmfield(options,field_names(~params.max_reps));
         save(paths.regData,'options','-append');
 
-        %% Save registered stacks as TIFF
+        % Remove stacks from saved MAT files
+        removeStackData(paths.mat);
+
+        %% Save Registered Stacks as TIFF
+
+        %Apply shifts as needed for each channel
         applyShiftsTime = tic;
-        %Apply registration to second channel if needed
-        if params.preserve_chans
-            %2-Channel: Apply Shifts and Save Stacks in Original Channel Order
-            %paths = applyShifts_multiChannel(paths, dirs, stackInfo, chan_ID, params)
-            paths = applyShifts_multiChannel(...
-                paths, dirs, stackInfo, [1,2], params); %Apply shifts and save .TIF files
-        elseif params.ref_channel %set to 0 for 1-channel imaging
-            %2-Channel: Apply Shifts and Save One Channel
-            paths = applyShifts_multiChannel(...
-                paths, dirs, stackInfo, params.reg_channel, params); %Apply shifts and save .TIF files
-        else
-            %1-Channel: Save Registered Stacks as .TIF
-            paths  = applyShifts_multiChannel(paths, dirs, stackInfo, 1, params); %Apply shifts and save .TIF files
-        end
+        paths = iCorreApplyShifts_batch(paths, dirs, params);
         applyShiftsDuration = toc(applyShiftsTime);
         disp(['Time spent applying shifts to output channel(s): ' num2str(applyShiftsDuration) ' s']);
 
+        %Generate binned average stacks for quality control
         if params.do_stitch
-            bin_width = params.bin_width;
-            if params.preserve_chans %Binned Avg includes both channels, eg, for use in cropping
-                stackInfo.nFrames = 2*stackInfo.nFrames;
-                bin_width = 2*bin_width;
-            elseif params.ref_channel
-                disp('Getting global downsampled stack (binned avg.) and max projection from registered reference channel...');
-                binnedAvg_batch(paths.mat,dirs.save_ref,stackInfo,bin_width); %Save binned avg and projection to ref-channel dir
+            disp('Getting global downsampled stack (binned avg.) and mean projection...');
+            for j = 1:numel(paths.save_tiff) %One cell per channel
+                binnedAvg_batch(paths.save_tiff{j},dirs.main,stackInfo,params);
             end
-            disp('Getting global downsampled stack (binned avg.) and max projection of (co-)registered frames...');
-            binnedAvg_batch(paths.save_tiff,dirs.main,stackInfo,bin_width); %Save binned avg and projection to main data dir
         end
 
-        run_times.saveTif = toc(applyShiftsTime);
-        disp(['Total time for saving registered data: ' num2str(run_times.saveTif) ' s']);
-        save(paths.regData,'run_times','-append'); %save parameters
-
-        % --- Movement Correction Metrics ---
+        % Movement Correction Metrics
         tic;
         disp('Calculating motion correction quality metrics...');
         %Calculate
-        [R, crispness, meanProj] = mvtCorrMetrics(data_dirs{i}, params.reg_channel);
-        %Save results, figure, and mean projection
-        [~,session_ID,~] = fileparts(dirs.main);
-        save(fullfile(data_dirs{i},"reg_info.mat"), "R", "crispness", "meanProj","-append");
-        save_multiplePlots(...
-            fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), data_dirs{i});
-        saveTiff(meanProj, stackInfo.tags, fullfile(...
-            save_dir,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
+        reg_chan = params.reg_channel;
+        if params.save_interleaved
+            reg_chan=[];
+        end
+        for j = 1:numel(paths.save_tiff) %One cell per channel
+            [R, crispness, meanProj] = mvtCorrMetrics(paths.raw, paths.save_tiff{j},params.reg_channel);
+            %Save results, figure, and mean projection
+            [~,session_ID,~] = fileparts(dirs.main);
+            save(fullfile(dirs.main,"reg_info.mat"), "R", "crispness", "meanProj","-append");
+            save_multiplePlots(...
+                fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), dirs.main);
+            saveTiff(int16(meanProj.reg), stackInfo.tags, fullfile(...
+                dirs.main,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
+        end
         %Save run time
         run_times.motionCorrMetrics = toc;
         disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
         save(paths.regData,'run_times','-append'); %save correction metrics and runtime
-
-
-        %% Remove stacks from saved MAT files
-        if params.delete_mat
-            removeStackData_par(paths.mat);
-        end
-        
-        %Remove temporary MAT files
-%         if params.delete_mat
-%             rmdir(dirs.mat,'s'); %DELETE .MAT dir...
-%         end
 
         clearvars '-except' root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;
 

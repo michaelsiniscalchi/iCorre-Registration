@@ -68,14 +68,14 @@ for i = 1:numel(data_dirs)
         tic;
         disp('Calculating motion correction quality metrics...');
         %Calculate
-        [R, crispness, meanProj] = mvtCorrMetrics(fullfile(root_dir,data_dirs{i}), params.reg_channel);
+        [R, crispness, meanProj] = mvtCorrMetrics(dirs.main, params.reg_channel);
         %Save results, figure, and mean projection
         [~,session_ID,~] = fileparts(dirs.main);
-        save(fullfile(fullfile(root_dir,data_dirs{i}),"reg_info.mat"), "R", "crispness", "meanProj","-append");
+        save(fullfile(dirs.main,"reg_info.mat"), "R", "crispness", "meanProj","-append");
         save_multiplePlots(...
-            fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), fullfile(root_dir,data_dirs{i}));
+            fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), dirs.main);
         saveTiff(meanProj, stackInfo.tags, fullfile(...
-            save_dir,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
+            dirs.main,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
         %Save run time
         run_times.motionCorrMetrics = toc;
         disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
@@ -84,7 +84,7 @@ for i = 1:numel(data_dirs)
 
         %% Remove stacks from saved MAT files 
         if params.delete_mat
-            removeStackData_par(paths.mat);
+            removeStackData(paths.mat);
         end
 
     catch err

@@ -41,21 +41,17 @@ parfor i = 1:numel(tif_paths)
     disp(['Converting [parallel] ' source '...']);
     
     % Load Stack and Extract TIFF tags
-    [stack, tags] =  loadtiffseq(...
+    [stack, tags, ImageDescription{i}] =  loadtiffseq(...
         tif_paths{i},options.chan_number,options.read_method); % load raw stack (.tif)
-    ImageDescription{i} = tags.ImageDescription;
     
     %Crop images if specified
     if options.crop_margins
         stack = cropStack(stack, options.crop_margins);
-    end
-
-    %Store additional info
-    if i==1 % Extract general parameters for whole session from first stack
-        %Basic image info
         tags.ImageLength  = size(stack,1); %Editing tags may be necessary after cropping
         tags.ImageWidth    = size(stack,2);
     end
+
+    %Store additional info
     nFrames(i,1) = size(stack,3); %Store number of frames
     rawFileName(i,1) = string(source); %Save original filename
     
@@ -64,7 +60,6 @@ parfor i = 1:numel(tif_paths)
     M.stack = stack;
     M.tags = tags;
     M.source = source;
-%     save(mat_paths{i},'stack','tags','source','-v7.3');
 end
 
 %Copy tags to stackInfo structure

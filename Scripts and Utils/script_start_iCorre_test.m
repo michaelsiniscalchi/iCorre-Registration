@@ -1,0 +1,1 @@
+iCorre_batch('V:\mjs20\nrmc','*test*');

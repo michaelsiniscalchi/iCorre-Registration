@@ -1,5 +1,5 @@
 
-function [ stack, tags ] = loadtiffseq( full_path, channel, method )
+function [ stack, tags, ImageDescription ] = loadtiffseq( full_path, channel, method )
 
 if nargin<2 || isempty(channel)
     channel = 1; %If empty, load all frames
@@ -13,7 +13,7 @@ if nargin<3
 end
 
 get_descriptions = true;
-if nargout<2
+if nargout<3
     get_descriptions = false;
 end
 
@@ -49,11 +49,15 @@ switch method
 
         %Read frames
         IFD = channel:nChans:nFrames; %Image File Dir (page) within TIFF
+        ImageDescription = cell(size(stack,3),1);
         for i = 1:size(stack,3)
             t.setDirectory(IFD(i));
             stack(:,:,i) = t.read();
             if get_descriptions %Frame-specific tags: I2C data, etc.
-                tags.ImageDescription{i,1} =  t.getTag("ImageDescription");
+                try
+                    ImageDescription{i,1} =  t.getTag("ImageDescription");
+                catch
+                end
             end
         end
         close(t);

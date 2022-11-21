@@ -1,9 +1,17 @@
-function binnedAvg_batch( stack_path, save_dir, stackInfo, bin_width )
+function binnedAvg_batch( stack_path, save_dir, stackInfo, params )
 
-tic; %Start timer
+%% Wrapper portion (work on functionalization of main code)
+bin_width = params.bin_width;
 
-% Check if input is TIF or MAT 
-[~,filename,ext] = fileparts(stack_path{1});
+%Handle interleaved stacks
+if params.save_interleaved %Binned Avg includes both channels, eg, for use in cropping
+    stackInfo.nFrames = 2*stackInfo.nFrames;
+    bin_width = 2*bin_width;
+end
+
+%% *** TO DO: functionalize the following ***
+% Check if input is TIF or MAT
+[fpath,~,ext] = fileparts(stack_path{1});
 stack_is_tif = strcmp(ext,'.tif');
 stack_is_mat = strcmp(ext,'.mat');
 
@@ -42,10 +50,6 @@ stack_downsample = zeros(stackInfo.imageHeight,stackInfo.imageWidth,numel(idx.DS
 
 %Load first stack
 if stack_is_tif
-    fname = cell(numel(stack_path),1);
-    for i = 1:numel(stack_path)
-        [~,fname{i},~] = fileparts(stack_path{i});
-    end
     curr.stack = loadtiffseq(stack_path{1}); %Load first stack
 elseif stack_is_mat
     curr = load(stack_path{1},'stack'); %Load first stack from *.MAT
@@ -55,6 +59,7 @@ end
 
 %Convert stack to double for averaging
 curr.stack = double(curr.stack);
+stack_mean = nan(size(curr.stack,1),size(curr.stack,2),numel(stack_path)); %Initialize output
 
 kk = 1; %Counter var for global idx 
 for j = 1:numel(stack_path)
@@ -93,10 +98,14 @@ end
 stack_downsample = image2integer(stack_downsample); 
 stack_mean = image2integer(mean(stack_mean,3));
 
-%Save as TIFF
-saveTiff(stack_downsample,stackInfo.tags,fullfile(...
-    save_dir,[filename(1:end-4) '_DS' num2str(bin_width) '.tif'])); %Save downsampled stack
-saveTiff(stack_mean,stackInfo.tags,fullfile(...
-    save_dir,[filename(1:end-4) '_stackMean.tif'])); %Save max projection for entire session
+% Save as TIFF
+[~,source_dir,~] = fileparts(fpath); %Use source dir as descriptor for chan number, etc.
+[~,fnames,~] = fileparts(stack_path); %File names
+prefix = fnames{1}(1:find(all(diff(char(fnames),1)),1,'first')-1); %Common prefix for all filenames
 
-toc
+tags = rmfield(stackInfo.tags,'ImageDescription'); %Save memory (ImageDescription must be specified for each IFD) 
+
+saveTiff(stack_downsample,tags,fullfile(...
+    save_dir,[prefix '_' source_dir '_DS' num2str(bin_width) '.tif'])); %Save downsampled stack
+saveTiff(stack_mean,tags,fullfile(...
+    save_dir,[prefix(1:end-6) '_stackMean.tif'])); %Save max projection for entire session

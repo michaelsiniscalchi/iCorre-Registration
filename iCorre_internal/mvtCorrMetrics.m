@@ -1,18 +1,14 @@
-function [ R, crispness, meanProj ] = mvtCorrMetrics( data_dir, reg_channel )
+function [ R, crispness, meanProj ] = mvtCorrMetrics( path_raw, path_registered, reg_channel )
 
 %Estimated using form from original NoRMCorre paper: https://doi.org/10.1016/j.jneumeth.2017.07.031
 
-% Paths to Data
-path.raw = getTiffPaths(fullfile(data_dir,"raw"));
-path.reg = getTiffPaths(fullfile(data_dir,"registered tiff"));
-
 % Calculate mean projection for each stack
-meanProj.raw = getMeanProjection(path.raw, reg_channel);
-meanProj.reg = getMeanProjection(path.reg);
+meanProj.raw = getMeanProjection(path_raw, reg_channel);
+meanProj.reg = getMeanProjection(path_registered);
 
 % Calculate Frame-by-Frame Pixel-Wise Correlation with Mean Projection
-[R.raw, R.mean.raw] = getStackCorr(path.raw, meanProj.raw, reg_channel);
-[R.reg, R.mean.reg] = getStackCorr(path.reg, meanProj.reg);
+[R.raw, R.mean.raw] = getStackCorr(path_raw, meanProj.raw, reg_channel);
+[R.reg, R.mean.reg] = getStackCorr(path_registered, meanProj.reg);
 
 % Estimate Crispness of Mean Projection
 fields = ["raw","reg"];
@@ -23,9 +19,6 @@ for i = 1:numel(fields)
 end
 
 %% INTERNAL FUNCTIONS
-function paths = getTiffPaths(directory)
-files = dir(fullfile(directory,"*.tif"));
-paths = string(fullfile({files.folder}',{files.name}'));
 
 function mean_proj = getMeanProjection( tiff_paths, channel )
 %Take running sum and divide by nFrames
@@ -33,7 +26,7 @@ if ~exist('channel','var')
     channel = [];
 end
 nFrames = zeros(numel(tiff_paths),1);
-parfor i = 1:numel(tiff_paths)
+for i = 1:numel(tiff_paths)
     stack = double(loadtiffseq(tiff_paths(i), channel)); %Load frames from specified channel
     sum_stack(:,:,i) = sum(stack,3); %Take sum across frames
     nFrames(i) = size(stack,3); %Store number of frames in stack for denomenator
