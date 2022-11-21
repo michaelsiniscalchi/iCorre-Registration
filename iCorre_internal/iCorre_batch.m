@@ -36,6 +36,7 @@ temp = dir(fullfile(root_dir,search_filter)); %Edit to specify data directories
 data_dirs = {temp.name};
 temp = ~(ismember(data_dirs,{'.','..'})) & ~isfile(fullfile(root_dir,data_dirs)) & strcmp({temp(:).folder},root_dir);
 data_dirs = data_dirs(temp); %remove '.', '..', subdirs, and any files from directory list
+disp(['Matching subdirectories for "' search_filter '"...']);
 disp('Directories for movement correction:');
 disp(data_dirs');
 clearvars temp;
@@ -97,7 +98,7 @@ for i=1:numel(data_dirs)
         disp(['Data directory: ' dirs.source]);
         disp({['Path for stacks as *.mat files: ' dirs.mat];...
             ['Path for info file: ' paths.regData]});
-
+             
         %% Load raw TIFs and convert to MAT for further processing
         disp('Converting *.TIF files to *.MAT for movement correction...');
 
@@ -112,6 +113,10 @@ for i=1:numel(data_dirs)
         else
             save(paths.stackInfo,'-STRUCT','stackInfo','-append');
         end
+
+         %Check params
+        params.imageSize = [stackInfo.imageHeight, stackInfo.imageWidth];
+        params = iCorreCheckParams(params); %**under devo** Currently checks grid_size against image size
 
         %% Correct RIGID, then NON-RIGID movement artifacts iteratively
         % Set parameters
@@ -141,10 +146,6 @@ for i=1:numel(data_dirs)
         if ~strcmp(dirs.source, dirs.raw)
             params.max_reps(1) = 0;
         end
-
-        %Check params
-        params.imageSize = [stackInfo.imageHeight, stackInfo.imageWidth];
-        params = iCorreCheckParams(params); %**under devo** Currently checks grid_size against image size
 
         % Generate SEED Template and Initialize MAT file
         template = getRefImg(paths.mat,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
