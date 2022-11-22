@@ -8,7 +8,7 @@ margins = params.crop_margins;
 gridSize = params.grid_size;
 imageSize = params.imageSize; %Adjust for any cropping
 
-if any(margins) && numel(margins)~=4
+if any(margins) && ~ismember(numel(margins),[1,3,4]) %Only vectors of length 1, 3, or 4 allowed
     %Check crop margins
     error('params.crop_margins must be either scalar, or a 1-by-3 or 1-by-4 numeric vector. See cropStack.m for details.')
 elseif isfield(params,'imageSize') && any(mod(params.imageSize,gridSize))

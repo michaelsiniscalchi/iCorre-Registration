@@ -96,8 +96,8 @@ for i=1:numel(data_dirs)
 
         %Display Paths
         disp(['Data directory: ' dirs.source]);
-        disp({['Path for stacks as *.mat files: ' dirs.mat];...
-            ['Path for info file: ' paths.regData]});
+        disp(['Path for stacks as *.mat files: ' dirs.mat]);
+        disp("Path for info file: "); disp(paths.regData);
              
         %% Load raw TIFs and convert to MAT for further processing
         disp('Converting *.TIF files to *.MAT for movement correction...');
@@ -195,28 +195,27 @@ for i=1:numel(data_dirs)
         end
 
         % Movement Correction Metrics
-        tic;
-        disp('Calculating motion correction quality metrics...');
-        %Calculate
-        reg_chan = params.reg_channel;
-        if params.save_interleaved
-            reg_chan=[];
-        end
-        for j = 1:numel(paths.save_tiff) %One cell per channel
-            [R, crispness, meanProj] = mvtCorrMetrics(paths.raw, paths.save_tiff{j},params.reg_channel);
-            %Save results, figure, and mean projection
-            [~,session_ID,~] = fileparts(dirs.main);
+        if ~params.save_interleaved
+            tic;
+            disp('Calculating motion correction quality metrics...');
+            %Calculate and save
+            for j = 1:numel(paths.save_tiff) %One cell per channel
+                [R(j), crispness(j), meanProj(j)] = ...
+                    mvtCorrMetrics(paths.raw, paths.save_tiff{j}, j, params.crop_margins);
+                %Save results, figure, and mean projection
+                save_multiplePlots(fig_mvtCorrMetrics(...
+                    [data_dir '_chan' num2str(j)], R(j), crispness(j), meanProj(j)),...
+                    fullfile(dirs.main, save_dir));
+                saveTiff(int16(meanProj(j).reg), stackInfo.tags,...
+                    fullfile(dirs.main, save_dir, [data_dir '_chan' num2str(j) '_stackMean.tif']));
+            end
             save(fullfile(dirs.main,"reg_info.mat"), "R", "crispness", "meanProj","-append");
-            save_multiplePlots(...
-                fig_mvtCorrMetrics(session_ID, R, crispness, meanProj), dirs.main);
-            saveTiff(int16(meanProj.reg), stackInfo.tags, fullfile(...
-                dirs.main,[session_ID '_chan' num2str(params.reg_channel) '_stackMean.tif']));
-        end
-        %Save run time
-        run_times.motionCorrMetrics = toc;
-        disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
-        save(paths.regData,'run_times','-append'); %save correction metrics and runtime
 
+            %Save run time
+            run_times.motionCorrMetrics = toc;
+            disp(['Time elapsed: ' num2str(run_times.motionCorrMetrics) ' s']);
+            save(paths.regData,'run_times','-append'); %save correction metrics and runtime
+        end
         clearvars '-except' root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;
 
     catch err

@@ -1,1 +1,1 @@
-iCorre_batch('V:\mjs20\nrmc','*test*');
+iCorre_batch('X:\michael\network-batch\nrmc','*test*');
