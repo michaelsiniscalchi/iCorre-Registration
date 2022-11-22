@@ -10,7 +10,7 @@ imageSize = params.imageSize; %Adjust for any cropping
 
 if any(margins) && numel(margins)~=4
     %Check crop margins
-    error('params.crop_margins must be either scalar or a 1-by-4 numeric vector')
+    error('params.crop_margins must be either scalar, or a 1-by-3 or 1-by-4 numeric vector. See cropStack.m for details.')
 elseif isfield(params,'imageSize') && any(mod(params.imageSize,gridSize))
     %If image size is not divisible by grid size, adjust grid size and warn
     for i = 1:numel(gridSize)
