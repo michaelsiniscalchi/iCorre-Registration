@@ -199,6 +199,7 @@ for i=1:numel(data_dirs)
             tic;
             disp('Calculating motion correction quality metrics...');
             %Calculate and save
+            save_dir = 'motion-correction-metrics';
             for j = 1:numel(paths.save_tiff) %One cell per channel
                 [R(j), crispness(j), meanProj(j)] = ...
                     mvtCorrMetrics(paths.raw, paths.save_tiff{j}, j, params.crop_margins);
