@@ -5,10 +5,6 @@ dirs.main = fullfile(root_dir,data_dir);
 dirs.raw = fullfile(root_dir,data_dir,'raw'); %Raw data directory
 dirs.source = fullfile(root_dir,data_dir,source_dir); %Default is 'raw', but can be changed to allow for seed/rigid registration->cropping->registration
 dirs.mat = fullfile(root_dir,data_dir,'mat'); %temporary MAT file for pixel data ('stack') and transformations
-% dirs.save_mat = fullfile(root_dir,data_dir,'registered mat'); %to save registered stacks as MAT
-% dirs.save_reg = fullfile(root_dir,data_dir,['registered-chan' num2str(params.reg_channel)]); %to save registered stacks as TIFF
-% dirs.save_ref = fullfile(root_dir,data_dir,['registered-chan' num2str(params.ref_channel)]); %to save registered stacks as TIFF
-% dirs.save_interleaved = fullfile(root_dir,data_dir,'registered-interleaved');
 
 %Path to Raw TIFFs
 tiffs = dir(fullfile(dirs.raw,'*.tif'));

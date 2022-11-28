@@ -23,7 +23,8 @@ maxRepSeed = 1; %Number of repetitions for ref. image (seed) fixed at 1
 
 %% SET DEFAULTS AND EXTRACT SAVED SETTINGS
 
-% These default settings worked well for most data acquired at 4 Hz with 256x256 pixels
+% These default settings have worked well for most data acquired at 30 Hz/512x512 pixels
+%   -with the exception of cropping, which usually helps but should be decided for each case
 settings = [...
     
     "Batch Directory (optional)",                                       "root_dir",         "";...
