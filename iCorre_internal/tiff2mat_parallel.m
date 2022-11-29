@@ -45,7 +45,7 @@ parfor i = 1:numel(tif_paths)
         tif_paths{i},options.chan_number,options.read_method); % load raw stack (.tif)
     
     %Crop images if specified
-    if options.crop_margins
+    if ~isempty(options.crop_margins)
         stack = cropStack(stack, options.crop_margins);
         tags.ImageLength  = size(stack,1); %Editing tags may be necessary after cropping
         tags.ImageWidth    = size(stack,2);
