@@ -28,13 +28,18 @@ for i = 1:numel(data_dir)
         [~,I] = sort([raw_tiffs(:).datenum]);
         stackInfo.rawFileNames = string({raw_tiffs(I).name}');
         disp('Raw File Names:'); disp(stackInfo.rawFileNames);
+        
         %Extract session start-time
         [~,~,ImageDescription] =...
             loadtiffseq(fullfile(batch_dir,data_dir(i),'raw',raw_tiffs(1).name),1); % load raw stack (.tif)
         D = textscan(ImageDescription{1},'%s%s','Delimiter',{'='});
         stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
+        
         %Remove old field 'rawFileName'
-        stackInfo=rmfield(stackInfo,'rawFileName');
+        if isfield(stackInfo,'rawFileName')
+            stackInfo = rmfield(stackInfo,'rawFileName');
+        end
+        
         %Save data structure
         disp(['Editing stackInfo from session imaged on ' datestr(stackInfo.startTime,'yyyy-mm-dd') '...']);
         save(fullfile(batch_dir,data_dir(i),'stack_info.mat'),'-struct','stackInfo','-append');
