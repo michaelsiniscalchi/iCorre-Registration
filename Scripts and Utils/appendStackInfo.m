@@ -1,15 +1,25 @@
 function appendStackInfo( batch_dir, search_filter )
 
-% Set path
+% Set MATLAB search path
 dirs = getRoots();
 addGitRepo(dirs,'General','BrainCogs_mjs','iCorre-Registration');
 
-%Run basic behavioral processing for each imaging session
-list = dir(fullfile(batch_dir, ['*' search_filter '*']));
+% List Data Dirs for Processing
+list = dir(fullfile(batch_dir, search_filter));
 list = list([list.isdir] & ~ismember({list.name},{'.','..'}));
 data_dir = string({list.name}');
+disp(data_dir);
+
+% Append new fields to stackInfo as needed 
 for i = 1:numel(data_dir)
-    stackInfo = load(fullfile(batch_dir,data_dir(i),'stack_info.mat')); 
+    
+    stackInfo_file = fullfile(batch_dir,data_dir(i),'stack_info.mat');
+    if exist(stackInfo_file,'file')
+        stackInfo = load(fullfile(batch_dir,data_dir(i),'stack_info.mat'));
+    else
+        continue
+    end
+    
     raw_fnames = string(ls(fullfile(batch_dir,data_dir(i),'raw','*.tif')));
     if ~isfield(stackInfo,'startTime')
         [~,~,ImageDescription] =...
