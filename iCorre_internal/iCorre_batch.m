@@ -109,13 +109,19 @@ for i=1:numel(data_dirs)
             'crop_margins',params.crop_margins,...
             'read_method',params.read_method,...
             'extract_I2C',params.saveI2CData && strcmp(dirs.source,dirs.raw))); %Extract I2C data only if starting from raw TIFFs
+     
+        %Append filenames for raw and registered tiffs
+        [~,fnames,ext] = fileparts(paths.raw);
+        stackInfo.rawFileNames = join([fnames,ext],'',2);
+        
+        %Save stackInfo structure
         if ~exist(paths.stackInfo,"file")
             save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
         else
             save(paths.stackInfo,'-STRUCT','stackInfo','-append');
         end
 
-         %Check params
+        %Check params
         params.imageSize = [stackInfo.imageHeight, stackInfo.imageWidth];
         params = iCorreCheckParams(params); %**under devo** Currently checks grid_size against image size
 

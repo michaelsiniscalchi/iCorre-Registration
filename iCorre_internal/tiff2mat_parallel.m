@@ -53,7 +53,6 @@ parfor i = 1:numel(tif_paths)
 
     %Store additional info
     nFrames(i,1) = size(stack,3); %Store number of frames
-%     rawFileName(i,1) = string(source); %Save original filename
     
     %Parallel Save
     M = matfile(mat_paths{i},'Writable',true);
@@ -69,10 +68,10 @@ stackInfo.class = class(Stack.stack);
 stackInfo.imageHeight   = Stack.tags.ImageLength; %Editing tags may be necessary after cropping
 stackInfo.imageWidth    = Stack.tags.ImageWidth;
 stackInfo.nFrames       = nFrames(:); %Store number of frames
-% stackInfo.rawFileName   = rawFileName(:); %Save original filename
 stackInfo.margins       = options.crop_margins; %[top, bottom, left, right]
 stackInfo.tags          = Stack.tags; %Frame-invariant tags
 stackInfo.tags.ImageDescription = ImageDescription; %Frame-specific
+
 %Append session start-time
 D = textscan(ImageDescription{1}{1},'%s%s','Delimiter',{'='});
 stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
