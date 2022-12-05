@@ -20,10 +20,11 @@ for i = 1:numel(data_dir)
         continue
     end
     
-    raw_fnames = string(ls(fullfile(batch_dir,data_dir(i),'raw','*.tif')));
+    raw_tiffs = dir(fullfile(batch_dir,data_dir(i),'raw','*.tif'));
+    disp(['Getting session start-time from Tiff #1: ' raw_tiffs(1).name])
     if ~isfield(stackInfo,'startTime')
         [~,~,ImageDescription] =...
-            loadtiffseq(fullfile(batch_dir,data_dir(i),'raw',raw_fnames(1)),1); % load raw stack (.tif)
+            loadtiffseq(fullfile(batch_dir,data_dir(i),'raw',raw_tiffs(1).name),1); % load raw stack (.tif)
         D = textscan(ImageDescription{1},'%s%s','Delimiter',{'='});
         stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
         disp(['Editing stackInfo from session imaged on ' datestr(stackInfo.startTime,'yyyy-mm-dd') '...']);
