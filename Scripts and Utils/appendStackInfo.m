@@ -6,7 +6,10 @@ addGitRepo(dirs,'General','BrainCogs_mjs','iCorre-Registration');
 
 % List Data Dirs for Processing
 list = dir(fullfile(batch_dir, search_filter));
+disp({list.name}); %%%
 list = list([list.isdir] & ismember({list(:).folder},batch_dir) & ~ismember({list.name},{'.','..'}));
+disp(search_filter); %%%
+disp({list.name}); %%%
 data_dir = string({list.name}');
 disp(data_dir);
 
