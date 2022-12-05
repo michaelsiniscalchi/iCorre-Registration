@@ -22,26 +22,31 @@ for i = 1:numel(data_dir)
     end
 
     raw_tiffs = dir(fullfile(batch_dir,data_dir(i),'raw','*.tif'));
-    disp(['Getting session start-time from Tiff #1: ' raw_tiffs(1).name])
+
+    %Record session start-time
     if ~isfield(stackInfo,'startTime')
-        %Record raw filenames
-        [~,I] = sort([raw_tiffs(:).datenum]);
-        stackInfo.rawFileNames = string({raw_tiffs(I).name}');
-        disp('Raw File Names:'); disp(stackInfo.rawFileNames);
-        
-        %Extract session start-time
+        disp(['Getting session start-time from Tiff #1: ' raw_tiffs(1).name])
         [~,~,ImageDescription] =...
             loadtiffseq(fullfile(batch_dir,data_dir(i),'raw',raw_tiffs(1).name),1); % load raw stack (.tif)
         D = textscan(ImageDescription{1},'%s%s','Delimiter',{'='});
         stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
-        
-        %Remove old field 'rawFileName'
-        if isfield(stackInfo,'rawFileName')
-            stackInfo = rmfield(stackInfo,'rawFileName');
-        end
-        
-        %Save data structure
-        disp(['Editing stackInfo from session imaged on ' datestr(stackInfo.startTime,'yyyy-mm-dd') '...']);
-        save(fullfile(batch_dir,data_dir(i),'stack_info.mat'),'-struct','stackInfo','-append');
     end
+
+    %Record raw filenames
+    if ~isfield(stackInfo,'rawFileNames')
+        disp('Adding Field "rawFileNames"...');
+        [~,I] = sort([raw_tiffs(:).datenum]);
+        stackInfo.rawFileNames = string({raw_tiffs(I).name}');
+        disp('File Names:'); disp(stackInfo.rawFileNames);
+    end
+
+    %Remove old field 'rawFileName'
+    if isfield(stackInfo,'rawFileName')
+        disp('Removing obsolete field "rawFileName"');
+        stackInfo = rmfield(stackInfo,'rawFileName');
+    end
+
+    %Save data structure
+    disp(['Editing stackInfo from session imaged on ' datestr(stackInfo.startTime,'yyyy-mm-dd') '...']);
+    save(fullfile(batch_dir,data_dir(i),'stack_info.mat'),'-struct','stackInfo','-append');
 end
