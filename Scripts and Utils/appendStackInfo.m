@@ -48,5 +48,5 @@ for i = 1:numel(data_dir)
 
     %Save data structure
     disp(['Editing stackInfo from session imaged on ' datestr(stackInfo.startTime,'yyyy-mm-dd') '...']);
-    save(fullfile(batch_dir,data_dir(i),'stack_info.mat'),'-struct','stackInfo','-append');
+    save(fullfile(batch_dir,data_dir(i),'stack_info.mat'),'-struct','stackInfo');
 end
