@@ -8,7 +8,8 @@ dirs.mat = fullfile(root_dir,data_dir,'mat'); %temporary MAT file for pixel data
 
 %Path to Raw TIFFs
 tiffs = dir(fullfile(dirs.raw,'*.tif'));
-paths.raw = fullfile({dirs.raw}',{tiffs(:).name}');
+[~, idx] = sort([tiffs.datenum]);
+paths.raw = fullfile({dirs.raw}',{tiffs(idx).name}');
 
 %Temporary MAT files for working memory
 paths.mat = cellfun(@(C) [C(1:end-4), '.mat'],... 
