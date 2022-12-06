@@ -70,11 +70,13 @@ stackInfo.imageWidth    = Stack.tags.ImageWidth;
 stackInfo.nFrames       = nFrames(:); %Store number of frames
 stackInfo.margins       = options.crop_margins; %[top, bottom, left, right]
 stackInfo.tags          = Stack.tags; %Frame-invariant tags
-stackInfo.tags.ImageDescription = ImageDescription; %Frame-specific
 
 %Append session start-time
-D = textscan(ImageDescription{1}{1},'%s%s','Delimiter',{'='});
-stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
+if ~isempty(ImageDescription{1})
+    stackInfo.tags.ImageDescription = ImageDescription; %Frame-specific
+    D = textscan(ImageDescription{1}{1},'%s%s','Delimiter',{'='});
+    stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
+end
 
 %Extract I2C Data if specified
 if options.extract_I2C

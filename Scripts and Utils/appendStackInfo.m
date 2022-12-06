@@ -26,7 +26,7 @@ for i = 1:numel(data_dir)
     %Record session start-time
     if ~isfield(stackInfo,'startTime')
         disp(['Getting session start-time from Tiff #1: ' raw_tiffs(1).name])
-        [~,~,ImageDescription] =...
+        [~,~,ImageDescription] =... %OR get it from stackInfo.tags...
             loadtiffseq(fullfile(batch_dir,data_dir(i),'raw',raw_tiffs(1).name),1); % load raw stack (.tif)
         D = textscan(ImageDescription{1},'%s%s','Delimiter',{'='});
         stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
