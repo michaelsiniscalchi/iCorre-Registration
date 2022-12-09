@@ -72,7 +72,7 @@ stackInfo.margins       = options.crop_margins; %[top, bottom, left, right]
 stackInfo.tags          = Stack.tags; %Frame-invariant tags
 
 %Append session start-time
-if ~isempty(ImageDescription{1}) %Tag removed before saving processed TIFFs
+if ~isempty(ImageDescription{1}{1}) %Tag removed before saving processed TIFFs
     stackInfo.tags.ImageDescription = ImageDescription; %Frame-specific
     D = textscan(ImageDescription{1}{1},'%s%s','Delimiter',{'='});
     stackInfo.startTime = str2num(D{2}{strcmp(D{1},'epoch ')});
