@@ -39,6 +39,11 @@ data_dirs = data_dirs(temp); %remove '.', '..', subdirs, and any files from dire
 disp(['Root directory: ' root_dir]);
 disp('Directories for movement correction:');
 disp(data_dirs');
+
+if isempty(data_dirs)
+    disp(['Invalid search filter: ' search_filter]);
+end
+
 clearvars temp;
 
 %% Setup parallel pool for faster processing
