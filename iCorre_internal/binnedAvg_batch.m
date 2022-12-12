@@ -103,9 +103,14 @@ stack_mean = image2integer(mean(stack_mean,3));
 [~,fnames,~] = fileparts(stack_path); %File names
 prefix = fnames{1}(1:find(all(diff(char(fnames),1)),1,'first')-1); %Common prefix for all filenames
 
-tags = rmfield(stackInfo.tags,'ImageDescription'); %Save memory (ImageDescription must be specified for each IFD) 
+if isfield(stackInfo.tags,'ImageDescription') %Conserve memory (ImageDescription must be specified for each IFD)
+    stackInfo.tags = rmfield(stackInfo.tags,'ImageDescription'); 
+end
 
-saveTiff(stack_downsample,tags,fullfile(...
-    save_dir,[prefix '_' source_dir '_DS' num2str(bin_width) '.tif'])); %Save downsampled stack
-saveTiff(stack_mean,tags,fullfile(...
-    save_dir,[prefix '_' source_dir '_stackMean.tif'])); %Save max projection for entire session
+%Save downsampled stack
+saveTiff(stack_downsample,stackInfo.tags,fullfile(...
+    save_dir,[prefix '_' source_dir '_DS' num2str(bin_width) '.tif'])); 
+
+%Save mean projection for entire session
+saveTiff(stack_mean,stackInfo.tags,fullfile(...
+    save_dir,[prefix '_' source_dir '_stackMean.tif']));
