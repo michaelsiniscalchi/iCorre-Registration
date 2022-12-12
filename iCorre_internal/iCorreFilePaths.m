@@ -20,9 +20,14 @@ paths.mat = cellfun(@(C) [C(1:end-4), '.mat'],...
 tiffs = dir(fullfile(dirs.source,'*.tif')); 
 paths.source = fullfile({dirs.source}',{tiffs(:).name}');
 
-%Registered Data from Channel 1, if existent
-tiffs = dir(fullfile(dirs.registered,'*.tif')); 
-paths.registered = fullfile({dirs.registered}',{tiffs(:).name}');
+%Registered Data from Channel 1 and/or 2, if existent
+reg_dir = {...
+    fullfile(root_dir,data_dir,'registered-chan1'); 
+    fullfile(root_dir,data_dir,'registered-chan2')};
+for i = 1:2
+    tiffs = dir(fullfile(reg_dir{i},'*.tif'));
+    paths.registered{i} = string(fullfile(reg_dir(i)',{tiffs(:).name}'));
+end
 
 %Metadata
 paths.regData = fullfile(root_dir,data_dir,'reg_info.mat'); %Matfile containing registration data
@@ -30,6 +35,7 @@ paths.stackInfo = fullfile(root_dir,data_dir,'stack_info.mat'); %Matfile contain
 
 % Convert all fullfile paths to string arrays
 fields = fieldnames(paths);
+fields = fields(~ismember(fields,{'regData','stackInfo','registered'}));
 for i = 1:numel(fields)
     paths.(fields{i}) = string(paths.(fields{i}));
 end
