@@ -4,7 +4,7 @@ function [ R, crispness, meanProj ] = mvtCorrMetrics( path_raw, path_registered,
 
 % Calculate mean projection for each stack
 meanProj.raw = getMeanProjection(path_raw, reg_channel, crop_margins); %Split channels
-meanProj.reg = getMeanProjection(path_registered, []); %Load all frames
+meanProj.reg = getMeanProjection(path_registered, []); %Load all frames; already cropped
 
 % Calculate Frame-by-Frame Pixel-Wise Correlation with Mean Projection
 [R.raw, R.mean.raw] = getStackCorr(path_raw, meanProj.raw, reg_channel, crop_margins);
@@ -37,7 +37,7 @@ mean_proj = sum(sum_stack,3)/nFrames;
 
 % --- Get framewise correlations for whole session ---
 function [ R, meanR ] = getStackCorr(path_stacks, mean_proj, channel, crop_margins )
-if ~exist("crop_margins","var")
+if ~exist("crop_margins","var") || isempty(crop_margins)
     crop_margins = 0;
 end
 
