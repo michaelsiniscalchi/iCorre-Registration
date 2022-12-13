@@ -5,6 +5,7 @@ function iCorreBinnedAvg_posthoc( data_dir )
 stackInfo = load(paths.stackInfo);
 S = load(paths.regData,'params');
 
+disp(['Downsampling session ' data_dir '...']);
 for i = 1:numel(paths.registered)
     binnedAvg_batch(paths.registered{i}, dirs.main, stackInfo, S.params );
 end
