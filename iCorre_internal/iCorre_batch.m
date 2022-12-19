@@ -134,8 +134,13 @@ for i=1:numel(data_dirs)
         % Set parameters
         RMC_shift = round(0.5*params.max_shift); %Params value used for SEED (based on reference image); therefter, narrow the degrees freedom
         NRMC_shift = round(0.5*params.max_shift); %[10,10]; max dev = [8,8] for 512x512
-        overlap = round(params.grid_size/4); %[32,32] for 512x512
-
+            
+        %Set overlap between grids
+        overlap = round(params.grid_size/4); %[32,32] with 8 pix overlap for 512x512
+        if isfield(params,'grid_overlap')
+            overlap = round(params.grid_size.*params.grid_overlap); %
+        end
+        
         options.seed = NoRMCorreSetParms('d1',stackInfo.imageHeight,'d2',stackInfo.imageWidth,...
             'max_shift',params.max_shift,'shifts_method','FFT',...
             'correct_bidir',true,'bidir_us',1,... %correct_bidir appears to introduce artifacts when us_fac>1; use with caution.

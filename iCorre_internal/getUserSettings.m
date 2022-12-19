@@ -5,7 +5,7 @@
 %
 %---------------------------------------------------------------------------------------------------
 
-function [ params, root_dir, search_filter ] = getUserSettings( path_settings, inputBox_TF )
+function params = getUserSettings( path_settings, inputBox_TF )
 
 %% CHECK FOR SAVED SETTINGS
 
@@ -26,9 +26,7 @@ maxRepSeed = 1; %Number of repetitions for ref. image (seed) fixed at 1
 % These default settings have worked well for most data acquired at 30 Hz/512x512 pixels
 %   -with the exception of cropping, which usually helps but should be decided for each case
 settings = [...
-    
-    "Batch Directory (optional)",                                       "root_dir",         "";...
-    "Search Filter (optional)",                                         "search_filter",    "";...
+
     "Save Settings As...",                                              "path_settings",    path_settings;...
        
     "Directory Name for Source Data",                                   "source_dir",       "raw";...
@@ -42,6 +40,7 @@ settings = [...
        
     "Non-Rigid Correction: Max. Number of Repeats",                     "maxRepNRMC",       "3";...
     "Non-Rigid Correction: Patch Width",                                "grid_size",        "128";...
+    "Non-Rigid Correction: Patch Overlap (proportion)",                 "grid_overlap",     "0.25";...
     "Non-Rigid Correction: Max. Deviation from Rigid Shift (pixels)",   "max_dev",          "8";...
          
     "Error Tolerance (pixels)",                                         "max_err",          "5";...
@@ -94,7 +93,7 @@ for i = 1:size(settings,1)
             if numel(params.crop_margins)==1
                 params.crop_margins = repmat(params.crop_margins,1,4);
             end
-        case {"grid_size","max_shift","max_dev"} %Numeric
+        case {"grid_size","grid_overlap","max_shift","max_dev"} %Numeric
             params.(settings{i,2}) = repmat(str2double(settings{i,3}),1,2);
         case "maxRepRMC"
             maxReps = str2double(settings(ismember(settings(:,2),["maxRepRMC","maxRepNRMC"]),3))';
@@ -117,7 +116,3 @@ if inputBox_TF %If interactive
     save(path_settings,'settings'); %String array
     save(path_settings,'-struct','params','-append'); %Structure
 end
-
-%Additional Outputs for iCorre_batch()
-root_dir        = params.root_dir;
-search_filter   = params.search_filter;
