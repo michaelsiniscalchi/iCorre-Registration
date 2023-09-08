@@ -87,7 +87,11 @@ for i = 1:size(settings,1)
                 params.(settings{i,2}) = strjoin(["*",settings{i,3},"*"],'');
             end
         case {"nFrames_seed","max_err","ref_channel","reg_channel","bin_width"} %Numeric
-             params.(settings{i,2}) = str2double(settings{i,3});
+            if settings{i,3}=="0" %ref_channel and reg_channel set to 0 for 1-color imaging 
+                params.(settings{i,2}) = [];
+            else
+                params.(settings{i,2}) = str2double(settings{i,3});
+            end
         case "crop_margins"
             params.(settings{i,2}) = str2num(settings{i,3}); %#ok<ST2NM> %Numeric, can be list
             if numel(params.crop_margins)==1
