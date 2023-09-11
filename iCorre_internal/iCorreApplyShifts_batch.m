@@ -6,7 +6,7 @@ if params.save_ref || params.save_interleaved %Register both channels
 elseif params.ref_channel %Register only the follower channel
     chan_ID = params.reg_channel;
 else %Single-channel imaging    
-    chan_ID = 1;
+    chan_ID = 0;
 end
 
 %Create save directories

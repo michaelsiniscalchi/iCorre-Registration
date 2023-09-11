@@ -23,7 +23,7 @@ end
 function mean_proj = getMeanProjection( tiff_paths, channel, crop_margins )
 %Take running sum and divide by nFrames
 nFrames = zeros(numel(tiff_paths),1);
-if ~exist("crop_margins","var")
+if ~exist("crop_margins","var") || isempty(crop_margins)
     crop_margins = 0;
 end
 

@@ -2,7 +2,7 @@ function fullpath_save = iCorreApplyShifts(path_source, path_mat, path_save, cha
 
 %Load specified channel(s) from source TIFF
 channel = chan_ID;
-if numel(channel)>1
+if numel(channel)>1 || chan_ID==0
     channel = []; %Load all IFDs
 end
 stack = loadtiffseq(path_source, channel); % load raw stack (.tif) as cell

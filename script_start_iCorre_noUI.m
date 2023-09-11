@@ -1,7 +1,7 @@
 %% For use on the High-Perfomance Clusters, etc.
 
-root_dir = 'Y:\Michael\_testing';
-code_dir = 'Y:\Michael\_code\iCorre-Registration';
+root_dir = 'Y:\michael';
+code_dir = 'Y:\michael\_code\iCorre-Registration';
 search_filter = '*test*'; %With wildcards
 
 %Go to iCorre-Registration Repo directory
