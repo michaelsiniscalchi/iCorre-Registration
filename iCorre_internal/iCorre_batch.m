@@ -218,8 +218,9 @@ for i=1:numel(data_dirs)
             %Calculate and save
             save_dir = 'motion-correction-metrics';
             for j = 1:numel(paths.save_tiff) %One {} per channel
+                chanID = {params.reg_channel, params.ref_channel}; %[] if 1-color imaging
                 [R(j), crispness(j), meanProj(j)] = ...
-                    mvtCorrMetrics(paths.raw, paths.save_tiff{j}, j, params.crop_margins);
+                    mvtCorrMetrics(paths.raw, paths.save_tiff{j}, chanID{j}, params.crop_margins);
                 %Save results, figure, and mean projection
                 save_multiplePlots(fig_mvtCorrMetrics(...
                     [data_dirs{i} '_chan' num2str(j)], R(j), crispness(j), meanProj(j)),...
