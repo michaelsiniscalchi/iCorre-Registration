@@ -7,6 +7,7 @@ S = load(paths.regData,'params');
 
 disp(['Downsampling session ' data_dir '...']);
 disp(['Main data directory: ' dirs.main]);
+disp(['Registered data directory: ' dirs.registered]);
 disp(['Source for downsample: ' fileparts(paths.registered{1})]);
 binnedAvg_batch(paths.registered, dirs.main, stackInfo, S.params );
 
