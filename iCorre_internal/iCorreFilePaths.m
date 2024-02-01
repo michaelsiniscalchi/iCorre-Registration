@@ -10,12 +10,7 @@ dirs.mat = fullfile(root_dir,data_dir,'mat'); %temporary MAT file for pixel data
 paths.regData = fullfile(root_dir,data_dir,'reg_info.mat'); %Matfile containing registration data
 paths.stackInfo = fullfile(root_dir,data_dir,'stack_info.mat'); %Matfile containing image header info and tag struct for writing to TIF
 
-%Paths to Registered TIFFs
-if exist(paths.regData,"file")
-    s = load(paths.regData,'params'); %Check for 2-color imaging
-    dirs.registered = fullfile(root_dir,data_dir,['registered-chan',... %registered data directory
-        num2str(max([~isempty(s.params.reg_channel), s.params.reg_channel]))]); %channel idx (0 for 1-color imaging)
-end
+
 
 %Path to Raw TIFFs
 tiffs = dir(fullfile(dirs.raw,'*.tif'));
@@ -30,9 +25,16 @@ paths.mat = string(cellfun(@(C) [C(1:end-4), '.mat'],...
 tiffs = dir(fullfile(dirs.source,'*.tif')); 
 paths.source = string(fullfile({dirs.source}',{tiffs(:).name}'));
 
-%Registered Data from Channel 1 and/or 2, if existent
-tiffs = dir(fullfile(dirs.registered,'*.tif'));
-paths.registered = string(fullfile({dirs.registered}',{tiffs(:).name}'));
+%Paths to Registered TIFFs
+if exist(paths.regData,"file")
+    s = load(paths.regData,'params'); %Check for 2-color imaging
+    dirs.registered = fullfile(root_dir,data_dir,['registered-chan',... %registered data directory
+        num2str(max([~isempty(s.params.reg_channel), s.params.reg_channel]))]); %channel idx (0 for 1-color imaging)
+    
+    %Registered Data from Channel 1 and/or 2, if existent
+    tiffs = dir(fullfile(dirs.registered,'*.tif'));
+    paths.registered = string(fullfile({dirs.registered}',{tiffs(:).name}'));
+end
 
 % Convert all fullfile paths to string arrays
 fields = fieldnames(paths);
