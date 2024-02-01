@@ -11,11 +11,10 @@ paths.regData = fullfile(root_dir,data_dir,'reg_info.mat'); %Matfile containing 
 paths.stackInfo = fullfile(root_dir,data_dir,'stack_info.mat'); %Matfile containing image header info and tag struct for writing to TIF
 
 %Paths to Registered TIFFs
-dirs.registered = fullfile(root_dir,data_dir,'registered-chan0'); %Registered data directory for channel-0 (1-color imaging)
-
-s = load(paths.regData,'params'); %Check for 2-color imaging
-if s.params.reg_channel
-    dirs.registered = fullfile(root_dir,data_dir,['registered-chan', s.params.reg_channel]);
+if exist(paths.regData,"file")
+    s = load(paths.regData,'params'); %Check for 2-color imaging
+    dirs.registered = fullfile(root_dir,data_dir,['registered-chan',... %registered data directory
+        num2str(max([~isempty(s.params.reg_channel), s.params.reg_channel]))]); %channel idx (0 for 1-color imaging)
 end
 
 %Path to Raw TIFFs
