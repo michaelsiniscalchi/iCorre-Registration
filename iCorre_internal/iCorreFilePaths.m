@@ -34,6 +34,11 @@ if exist(paths.regData,"file")
     %Registered Data from Channel 1 and/or 2, if existent
     tiffs = dir(fullfile(dirs.registered,'*.tif'));
     paths.registered = string(fullfile({dirs.registered}',{tiffs(:).name}'));
+
+    %FUTURE: use fields from options or nRepeats to name folder (+
+    %chan_num), to separate RMC and NRMC results...
+    %Maybe internal to iCorre_batch???
+
 end
 
 % Convert all fullfile paths to string arrays

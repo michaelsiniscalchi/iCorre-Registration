@@ -45,7 +45,9 @@ switch method
             t.nextDirectory;
         end
         nFrames = t.currentDirectory;
-        stack = zeros(tags.ImageLength, tags.ImageWidth, nFrames/nChans,'int16');
+        dataType = ["uint16", "int16"];
+        stack = zeros(tags.ImageLength, tags.ImageWidth, nFrames/nChans,...
+            dataType(tags.SampleFormat)); %SampleFormat indexes into 'dataType'
 
         %Read frames
         IFD = channel:nChans:nFrames; %Image File Dir (page) within TIFF
