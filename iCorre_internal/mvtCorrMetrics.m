@@ -1,3 +1,20 @@
+% mvtCorrMetrics()
+%
+%PURPOSE: To assess movement correction by comparing two metrics pre- and post-correction:
+%           crispness of the mean projection and the Pearson correlation (R) between the pixelwise
+%           intensity of each frame and the mean projection.  
+%
+%AUTHOR: MJ Siniscalchi, Princeton Neuroscience Institute, 221101
+%
+%INPUT ARGS:
+%           'path_raw' [string array], the full path to each raw TIFF  
+%           'path_registered' [string array], the full path to each registered TIFF 
+%           'reg_channel' [positive integer], the functional (eg, GCaMP)
+%               channel for the raw image stacks. If one-color imaging or for one-color registered 
+%               stacks, enter [] for this argument. 
+%
+%---------------------------------------------------------------------------------------------------
+
 function [ R, crispness, meanProj ] = mvtCorrMetrics( path_raw, path_registered, reg_channel, crop_margins )
 
 %Estimated using form from original NoRMCorre paper: https://doi.org/10.1016/j.jneumeth.2017.07.031
