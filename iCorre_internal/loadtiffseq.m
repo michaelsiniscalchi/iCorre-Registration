@@ -75,7 +75,7 @@ switch method
 end
 
 %---------------------------------------------------------------------------------------------------
-% Comment 2202118 MJ Siniscalchi:
+% Comment 220218 MJ Siniscalchi:
 %
 % Use ScanImage TiffReader Class! Waaay faster than previous approaches
 % -just requires additional parsing of header info)
