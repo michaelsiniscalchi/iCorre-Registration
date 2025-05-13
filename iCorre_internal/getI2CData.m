@@ -41,13 +41,17 @@ for i = 1:numel(img_desc)
         
         %I2C data
         idx = strcmp(D{1},'I2CData ');
-        dataChar = erase(D{2}{idx},{'{','}','[',']'}); %Remove superfluous delimiters
-        if ~isempty(dataChar)
+        dataChar = erase(D{2}{idx},{'{','}','[',']'}); %Remove superfluous delimiters        
+        if ~isempty(dataChar) && i>1 
+            %Image description may be inaccurate for first frame due to long lag when initiating grab
             % Current format of I2C data in ViRMEn is 
             % '{{double(img_time), typecast([blockIdx,trialIdx,iteration],'uint8')} }'
             % eg, '{{49.933671315, [2,0,6,0,97,0]} }'
             dataCell = textscan(dataChar,...
-                '%f %u8 %u8 %u8 %u8 %u8 %u8','Delimiter',','); 
+                '%f %u8 %u8 %u8 %u8 %u8 %u8','Delimiter',',');
+            if i==1 %Image description may be inaccurate for first frame of session due to long lag when initiating grab
+                dataCell = cellfun(@(C), );
+            end
             time{i} = dataCell{:,1}; %I2C Time stamp
             frameNumber{i} = repmat(frameNumber{i},size(time{i},1),1); %Duplicate frame number for multiple I2C packets/frame  
             %Trial idx, blockidx, and iteration
